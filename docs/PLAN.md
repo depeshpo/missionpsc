@@ -44,8 +44,9 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
 - [x] `/admin` placeholder (ComingSoon) for future authoring + AI content seeder
 
 ## Feature build order
-1. **Syllabus Map** — `/syllabus` tree (Stage→Paper→Section→Unit), marks weights, unit checkmarks
-   (`useLocalIdSet`), coverage %.
+1. ✅ **Syllabus Map** — `/syllabus` tree (Stage→Paper→Section→Unit), marks weights, unit checkmarks
+   (`useLocalIdSet`), coverage %. Three routes built (`page` / `[paper]` / `[unit]`); progress
+   stored under `useLocalIdSet("syllabus-completed-units")`; components in `src/components/syllabus/`.
 2. **Subjective / Answer-Writing** — `data/subjective.ts`, prompt + model answer + your-notes
    editor; diplomatic-correspondence templates (Paper IV).
 3. **Flashcards** — `data/flashcards.ts`, flip card + know/again, decks for diplomatic terms /
