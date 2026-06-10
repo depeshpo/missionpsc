@@ -45,13 +45,30 @@ export interface Paper {
 
 // ---- Content types (placeholder data; hand-authored later) ----
 
+/**
+ * Format of a subjective question. Most papers are knowledge Q&A; Paper IV
+ * (English) mixes essay, translation, précis, comprehension and diplomatic
+ * correspondence — `kind` lets one type cover them all.
+ */
+export type QuestionKind =
+  | "qa"
+  | "essay"
+  | "translation"
+  | "precis"
+  | "comprehension"
+  | "correspondence";
+
 export interface SubjectiveQuestion {
   id: string;
   paperId: string;
   sectionId: string;
+  kind: QuestionKind;
   marks: number;
   prompt: string;
+  /** Source text to work from (translation / précis / comprehension). */
+  passage?: string;
   wordTarget?: number;
+  /** Reference answer, or the format/template for `correspondence`. */
   modelAnswer?: string;
   keywords: string[];
 }

@@ -47,8 +47,11 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
 1. ✅ **Syllabus Map** — `/syllabus` tree (Stage→Paper→Section→Unit), marks weights, unit checkmarks
    (`useLocalIdSet`), coverage %. Three routes built (`page` / `[paper]` / `[unit]`); progress
    stored under `useLocalIdSet("syllabus-completed-units")`; components in `src/components/syllabus/`.
-2. **Subjective / Answer-Writing** — `data/subjective.ts`, prompt + model answer + your-notes
-   editor; diplomatic-correspondence templates (Paper IV).
+2. ✅ **Subjective / Answer-Writing** — `data/subjective.ts` (placeholder bank + accessors),
+   prompt + collapsible model answer + autosaving your-answer editor; all four main papers
+   incl. every Paper IV format (essay/translation/précis/comprehension/correspondence
+   templates). Progress under `useLocalProgress("answer:<id>")` + `useLocalIdSet("answers-attempted")`;
+   components in `src/components/answers/`.
 3. **Flashcards** — `data/flashcards.ts`, flip card + know/again, decks for diplomatic terms /
    treaties / Vienna articles.
 4. **Notes / Study Material** — `data/notes.ts`, reader by syllabus unit + TOC.
