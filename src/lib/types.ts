@@ -88,12 +88,30 @@ export interface Deck {
   cardCount: number;
 }
 
+/**
+ * A block of note content. Headings carry an arbitrary `level` (1..n) so the
+ * reader can build a nested table of contents, and an `id` anchor generated at
+ * build time. Typed blocks now; MDX is the likely future format.
+ */
+export type NoteBlock =
+  | { type: "heading"; level: number; text: string; id: string }
+  | { type: "paragraph"; text: string }
+  | { type: "list"; items: string[] };
+
+/** A file/link attached to a note (e.g. a source PDF). Display deferred. */
+export interface NoteAttachment {
+  title: string;
+  href: string;
+  kind?: "pdf" | "link";
+}
+
 export interface Note {
   id: string;
+  /** Syllabus unit this note belongs to. */
   unitId: string;
   title: string;
-  /** Plain text / markdown body. Format finalized later. */
-  body: string;
+  body: NoteBlock[];
+  attachments?: NoteAttachment[];
 }
 
 export interface CurrentAffairItem {

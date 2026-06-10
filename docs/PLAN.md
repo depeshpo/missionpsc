@@ -56,7 +56,14 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
    review session with a recap (Restart / Reset deck); known cards persist via
    `useLocalIdSet("flashcards-known")`, decks show a known/total bar. Components in
    `src/components/flashcards/`.
-4. **Notes / Study Material** — `data/notes.ts`, reader by syllabus unit + TOC.
+4. ✅ **Notes / Study Material** — `data/notes.ts` (typed `NoteBlock[]` content + accessors),
+   docs-style reader: `/notes` index → `/notes/[paper]` overview with a persistent sidebar
+   (`[paper]/layout.tsx`) → `/notes/[paper]/[unit]` reader with nested in-page TOC. Read state
+   via `useLocalIdSet("notes-read")`; components in `src/components/notes/`.
+   ✅ *Follow-up:* **PDF attachments** — `NoteAttachments` renders a note's `attachments`
+   (links + lazy expandable iframe preview + Open/Download); local files in `public/attachments/`
+   (kept out of `public/notes/*` to avoid the `/notes/[paper]` route collision). Future: uploaded
+   from the deferred `/admin` dashboard.
 5. **Current Affairs** — `data/currentAffairs.ts`, dated feed + detail.
 6. **Resources Library + Dashboard/Bookmarks polish** — `data/resources.ts`; aggregate progress.
 
