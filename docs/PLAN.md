@@ -52,8 +52,10 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
    incl. every Paper IV format (essay/translation/précis/comprehension/correspondence
    templates). Progress under `useLocalProgress("answer:<id>")` + `useLocalIdSet("answers-attempted")`;
    components in `src/components/answers/`.
-3. **Flashcards** — `data/flashcards.ts`, flip card + know/again, decks for diplomatic terms /
-   treaties / Vienna articles.
+3. ✅ **Flashcards** — `data/flashcards.ts` (5 seeded decks + accessors), flip card + know/again
+   review session with a recap (Restart / Reset deck); known cards persist via
+   `useLocalIdSet("flashcards-known")`, decks show a known/total bar. Components in
+   `src/components/flashcards/`.
 4. **Notes / Study Material** — `data/notes.ts`, reader by syllabus unit + TOC.
 5. **Current Affairs** — `data/currentAffairs.ts`, dated feed + detail.
 6. **Resources Library + Dashboard/Bookmarks polish** — `data/resources.ts`; aggregate progress.
