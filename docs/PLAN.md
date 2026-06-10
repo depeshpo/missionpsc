@@ -64,7 +64,10 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
    (links + lazy expandable iframe preview + Open/Download); local files in `public/attachments/`
    (kept out of `public/notes/*` to avoid the `/notes/[paper]` route collision). Future: uploaded
    from the deferred `/admin` dashboard.
-5. **Current Affairs** — `data/currentAffairs.ts`, dated feed + detail.
+5. ✅ **Current Affairs** — `data/currentAffairs.ts` (seeded feed + accessors; `CurrentAffairItem`
+   enriched with `body`/`source`/`tags`), date-grouped feed with scope tabs + tag-chip filter,
+   bookmark/save toggle (`useLocalIdSet("bookmarks-current-affairs")`, for #6), and a detail
+   reader. Components in `src/components/current-affairs/`.
 6. **Resources Library + Dashboard/Bookmarks polish** — `data/resources.ts`; aggregate progress.
 
 ## Route map

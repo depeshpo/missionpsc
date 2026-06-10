@@ -1,10 +1,14 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { PageShell } from "@/components/layout/PageShell";
+import { currentAffairs, allTags } from "@/data/currentAffairs";
+import { CurrentAffairsFeed } from "@/components/current-affairs/CurrentAffairsFeed";
 
 export default function CurrentAffairsPage() {
   return (
-    <ComingSoon
+    <PageShell
       title="Current Affairs"
-      description="Dated national and international feed with a foreign-affairs focus."
-    />
+      description="Dated national and international developments, with a foreign-affairs focus. Filter by scope or tag, and bookmark items to revisit."
+    >
+      <CurrentAffairsFeed items={currentAffairs} tags={allTags()} />
+    </PageShell>
   );
 }

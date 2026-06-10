@@ -120,6 +120,12 @@ export interface CurrentAffairItem {
   scope: "national" | "international";
   title: string;
   summary: string;
+  /** Optional longer read (paragraphs). */
+  body?: string[];
+  /** Attribution link. */
+  source?: { title: string; href: string };
+  /** e.g. "MoFA", "UN", "treaty" — powers the feed tag filter. */
+  tags?: string[];
 }
 
 export interface Resource {
