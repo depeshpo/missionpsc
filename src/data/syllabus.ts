@@ -1,13 +1,15 @@
-import type { Paper, PaperCode, Section, Stage, Unit, Level } from "@/lib/types";
+import type { Paper, PaperCode, Section, Stage, Unit } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // The real Nepal Lok Sewa — Section Officer (Foreign Service / परराष्ट्र सेवा)
-// syllabus, encoded as the app's spine. Source: psc.gov.np objective +
-// subjective course PDFs. Edit here to refine wording; the UI derives from it.
+// syllabus, encoded as the app's spine. Source: psc.gov.np subjective course
+// PDFs. Scope: subjective study only (Stage II Main + Interview); the objective
+// MCQ stage is a separate product. Edit here to refine wording; the UI derives
+// from it.
 // ---------------------------------------------------------------------------
 
 // --- Author-friendly raw shape (ids are generated below) ---
-type RawUnit = { number: string; title: string; level?: Level; subtopics: string[] };
+type RawUnit = { number: string; title: string; subtopics: string[] };
 type RawSection = { label: string; marks: number; pattern?: string; units: RawUnit[] };
 type RawPaper = {
   code: PaperCode;
@@ -15,62 +17,11 @@ type RawPaper = {
   title: string;
   totalMarks: number;
   durationMins?: number;
-  type: "objective" | "subjective";
   note?: string;
   sections: RawSection[];
 };
 
 const RAW: RawPaper[] = [
-  // ===================== STAGE I — PRELIMINARY (Objective) =====================
-  {
-    code: "I",
-    stage: "prelim",
-    title: "Administrative Aptitude Test",
-    totalMarks: 100,
-    durationMins: 120,
-    type: "objective",
-    note: "Qualifying · 100 MCQs · Stage I",
-    sections: [
-      {
-        label: "Part A — General Awareness",
-        marks: 50,
-        pattern: "50×1=50",
-        units: [
-          { number: "1.1", title: "Geography", level: "I", subtopics: ["Physical, social and economic geography of Nepal and the World"] },
-          { number: "1.2", title: "History, Culture & Social System", level: "I", subtopics: ["Major historical events of the World", "Political, economic and socio-cultural aspects of ancient, medieval and modern Nepalese history", "People's Movements for democracy in Nepal", "Religions, culture, ethnicity, languages, literature and art of Nepal"] },
-          { number: "1.3", title: "Polity & Governance", level: "I", subtopics: ["Constitution, political system, rights-based issues", "Evolution of the Nepalese Administrative System"] },
-          { number: "1.4", title: "Economic Development", level: "I", subtopics: ["Infrastructure development (agriculture, industry, trade, tourism, transport, communication, education, health, electricity)", "Planning, resource mobilization, growth, development and employment", "Nepal's economic interaction with the World"] },
-          { number: "1.5", title: "Sustainable Development & Environment", level: "I", subtopics: ["Environmental ecology, ecological preservation, bio-diversity, climate change", "Demography, urbanization, settlement, pollution", "Conservation of natural resources and national heritage"] },
-          { number: "1.6", title: "Science & Technology", level: "I", subtopics: ["Major scientific discoveries, inventions and famous scientists", "Impact of science & technology on human life and society", "Evolution, heredity, health and diseases"] },
-          { number: "1.7", title: "International Affairs & Institutions", level: "I", subtopics: ["Nepal's relations with SAARC and major powers (China, USA, UK, Russia, France, Germany, Switzerland, Japan)", "UN System, multilateral arrangements and Nepal"] },
-          { number: "1.8", title: "Major Events & Current Affairs", level: "I", subtopics: ["National & international events: political, social, cultural, economic, scientific, sports, books, prizes, arts, literature, music, noted personalities and thinkers"] },
-        ],
-      },
-      {
-        label: "Part B — Aptitude Test",
-        marks: 30,
-        pattern: "30×1=30",
-        units: [
-          { number: "2.1", title: "Verbal Reasoning", subtopics: ["Series, analogy, classification, coding-decoding, missing character, common property, matrices, direction/distance, ranking, assertion & reason, induction, deduction, courses of action"] },
-          { number: "2.2", title: "Non-verbal Reasoning", subtopics: ["Series, analogy, classification, Venn diagrams, matrices, figure formation & analysis, dot situation, water/mirror images, embedded figures"] },
-          { number: "2.3", title: "Quantitative Aptitude", subtopics: ["Arithmetic reasoning, percentage, fraction, decimal, ratio, average, loss/profit, date/calendar, time and work"] },
-          { number: "2.4", title: "Mental Ability & Logical Reasoning", subtopics: ["General mental ability, logical reasoning and analytical ability"] },
-          { number: "2.5", title: "Data Interpretation", subtopics: ["Charts, graphs, tables, data sufficiency"] },
-        ],
-      },
-      {
-        label: "Part C — English Language Competence",
-        marks: 20,
-        pattern: "20×1=20",
-        units: [
-          { number: "3.1", title: "Comprehension", subtopics: ["Fact finding, inferential, core theme, true/false, issues raised, language based"] },
-          { number: "3.2", title: "Vocabulary", subtopics: ["Word meanings (literal/figurative/contextual), single-word expressions, synonyms/antonyms, derivatives, homonyms/homophones"] },
-          { number: "3.3", title: "Syntactic Ability", subtopics: ["Agreement, tense aspect, parallel structures, clauses, modifiers, conditionals, phrasal expressions, shifts, transformations, prepositions/conjunctions, parts of speech"] },
-        ],
-      },
-    ],
-  },
-
   // ===================== STAGE II — MAIN (Subjective) =====================
   {
     code: "II",
@@ -78,7 +29,6 @@ const RAW: RawPaper[] = [
     title: "Governance Systems",
     totalMarks: 100,
     durationMins: 180,
-    type: "subjective",
     note: "Main · 10×10 · Sections A–D",
     sections: [
       { label: "Section A — State and Governance", marks: 30, pattern: "10×3=30", units: [
@@ -101,7 +51,6 @@ const RAW: RawPaper[] = [
     title: "Contemporary Issues",
     totalMarks: 100,
     durationMins: 180,
-    type: "subjective",
     note: "Main · 10×10 · Sections A–D",
     sections: [
       { label: "Section A — Social Issues", marks: 30, pattern: "10×3=30", units: [
@@ -124,7 +73,6 @@ const RAW: RawPaper[] = [
     title: "English Language",
     totalMarks: 100,
     durationMins: 180,
-    type: "subjective",
     note: "Extra Paper I (Foreign Service) · Sections A–D",
     sections: [
       { label: "Section A — Composition", marks: 20, pattern: "20×1=20", units: [
@@ -149,7 +97,6 @@ const RAW: RawPaper[] = [
     title: "Foreign Policy & International Relations",
     totalMarks: 100,
     durationMins: 180,
-    type: "subjective",
     note: "Extra Paper II (Foreign Service) · MoFA core · Sections A–D",
     sections: [
       { label: "Section A — Foreign Policy & Strategic Relations", marks: 20, pattern: "10×2=20", units: [
@@ -179,7 +126,6 @@ const RAW: RawPaper[] = [
     stage: "interview",
     title: "Interview",
     totalMarks: 50,
-    type: "subjective",
     note: "Oral · Final stage · Foreign Service",
     sections: [
       { label: "Oral Examination", marks: 50, units: [
@@ -203,7 +149,6 @@ export const papers: Paper[] = RAW.map((rp) => {
       sectionId,
       number: ru.number,
       title: ru.title,
-      level: ru.level,
       subtopics: ru.subtopics,
     }));
     return { id: sectionId, paperId, label: rs.label, marks: rs.marks, pattern: rs.pattern, units };
@@ -215,7 +160,6 @@ export const papers: Paper[] = RAW.map((rp) => {
     title: rp.title,
     totalMarks: rp.totalMarks,
     durationMins: rp.durationMins,
-    type: rp.type,
     note: rp.note,
     sections,
   };
@@ -223,7 +167,6 @@ export const papers: Paper[] = RAW.map((rp) => {
 
 // --- Derived helpers ---
 export const STAGES: { id: Stage; title: string; subtitle: string }[] = [
-  { id: "prelim", title: "Stage I — Preliminary", subtitle: "Objective · 100 marks · Qualifying" },
   { id: "main", title: "Stage II — Main Examination", subtitle: "Subjective · 400 marks (Foreign Service)" },
   { id: "interview", title: "Final Stage — Interview", subtitle: "Oral · 50 marks" },
 ];

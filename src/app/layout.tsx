@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
+
+// Applies the saved/preferred theme before paint to avoid a flash of the wrong
+// theme. Injected via next/script (beforeInteractive) so it is hydration-safe.
+const themeInit = `(function(){try{var k='mission-psc:theme';var s=localStorage.getItem(k);var d=s==='dark'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,22 +34,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          // Apply the saved/preferred theme before paint to avoid a flash.
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var k='mission-psc:theme';var s=localStorage.getItem(k);var d=s==='dark'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
-          }}
-        />
-      </head>
       <body className="min-h-full">
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar className="hidden md:flex" />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <Topbar />
-            <main className="flex-1 overflow-y-auto">{children}</main>
-          </div>
-        </div>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeInit}
+        </Script>
+        {/* Surface chrome (Learn header vs Dashboard sidebar) lives in each
+            route group's own layout: src/app/(learn) and src/app/(dashboard). */}
+        {children}
       </body>
     </html>
   );

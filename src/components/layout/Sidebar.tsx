@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { navGroups } from "./nav";
+import { dashboardNav } from "./nav";
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/" || pathname === href;
@@ -32,7 +32,7 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
-        {navGroups.map((group, gi) => (
+        {dashboardNav.map((group, gi) => (
           <div key={gi}>
             {group.heading ? (
               <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">

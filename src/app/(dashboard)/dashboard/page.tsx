@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ListChecks, Map, PenLine, Layers } from "lucide-react";
+import { ArrowRight, BookOpen, Map, PenLine, Layers } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -7,7 +7,7 @@ import { STAGES, papersByStage, allUnits } from "@/data/syllabus";
 
 const quickLinks = [
   { href: "/syllabus", label: "Syllabus Map", icon: Map, desc: "Track coverage across all papers" },
-  { href: "/practice", label: "MCQ Practice", icon: ListChecks, desc: "Stage I objective drills" },
+  { href: "/notes", label: "Notes", icon: BookOpen, desc: "Read study material by unit" },
   { href: "/answers", label: "Answer Writing", icon: PenLine, desc: "Stage II 10×10 practice" },
   { href: "/flashcards", label: "Flashcards", icon: Layers, desc: "Terms, treaties, organizations" },
 ];
@@ -18,7 +18,7 @@ export default function DashboardPage() {
       title="Welcome back"
       description="Nepal Lok Sewa — Section Officer (Foreign Service). Your prep dashboard."
     >
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {STAGES.map((stage) => {
           const papers = papersByStage(stage.id);
           const marks = papers.reduce((sum, p) => sum + p.totalMarks, 0);

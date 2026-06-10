@@ -2,16 +2,11 @@
 // Source of truth: Nepal Lok Sewa Section Officer (Foreign Service) syllabus.
 // See docs/PLAN.md for the full exam structure.
 
-export type Stage = "prelim" | "main" | "interview";
-
-export type PaperType = "objective" | "subjective";
+// Scope: subjective study only (Stage II Main + Interview). The objective MCQ
+// stage (prelim) is a separate product and its types live there, not here.
+export type Stage = "main" | "interview";
 
 export type PaperCode = "I" | "II" | "III" | "IV" | "V";
-
-/** Level I (simpler 4-option MCQ) vs Level II (harder objective types). */
-export type Level = "I" | "II";
-
-export type QuestionType = "mcq" | "match" | "truefalse" | "fill";
 
 /** A unit/chapter within a section of a paper. */
 export interface Unit {
@@ -20,8 +15,6 @@ export interface Unit {
   /** Syllabus numbering, e.g. "1.2" or "2.3.1". */
   number: string;
   title: string;
-  /** Only meaningful for the Level-graded General Awareness units. */
-  level?: Level;
   subtopics: string[];
 }
 
@@ -45,26 +38,12 @@ export interface Paper {
   title: string;
   totalMarks: number;
   durationMins?: number;
-  type: PaperType;
-  /** Short note, e.g. "Qualifying" or "Extra Paper I (Foreign Service)". */
+  /** Short note, e.g. "Main · 10×10" or "Extra Paper I (Foreign Service)". */
   note?: string;
   sections: Section[];
 }
 
 // ---- Content types (placeholder data; hand-authored later) ----
-
-export interface Question {
-  id: string;
-  unitId: string;
-  level?: Level;
-  type: QuestionType;
-  stem: string;
-  options: string[];
-  /** Index into `options` (single-answer) for mcq/truefalse. */
-  answer: number;
-  explanation?: string;
-  source?: string;
-}
 
 export interface SubjectiveQuestion {
   id: string;
@@ -106,15 +85,6 @@ export interface CurrentAffairItem {
   scope: "national" | "international";
   title: string;
   summary: string;
-}
-
-export interface MockTest {
-  id: string;
-  title: string;
-  stage: Stage;
-  type: PaperType;
-  durationMins: number;
-  questionCount: number;
 }
 
 export interface Resource {

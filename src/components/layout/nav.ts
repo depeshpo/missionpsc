@@ -1,15 +1,14 @@
 import {
   LayoutDashboard,
   Map,
-  ListChecks,
   PenLine,
   Layers,
   BookOpen,
   Newspaper,
-  Timer,
   Library,
   Bookmark,
   Settings,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,28 +23,22 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export const navGroups: NavGroup[] = [
+// Learn surface — everything you read/study. Rendered in the (learn) top header.
+export const learnNav: NavItem[] = [
+  { href: "/syllabus", label: "Syllabus", icon: Map },
+  { href: "/notes", label: "Notes", icon: BookOpen },
+  { href: "/answers", label: "Answer Writing", icon: PenLine },
+  { href: "/flashcards", label: "Flashcards", icon: Layers },
+  { href: "/current-affairs", label: "Current Affairs", icon: Newspaper },
+  { href: "/resources", label: "Resources", icon: Library },
+];
+
+// Dashboard surface — account, progress, management. Rendered in the Sidebar.
+export const dashboardNav: NavGroup[] = [
   {
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/syllabus", label: "Syllabus Map", icon: Map },
-    ],
-  },
-  {
-    heading: "Practice",
-    items: [
-      { href: "/practice", label: "MCQ Practice", icon: ListChecks },
-      { href: "/answers", label: "Answer Writing", icon: PenLine },
-      { href: "/flashcards", label: "Flashcards", icon: Layers },
-      { href: "/mock-tests", label: "Mock Tests", icon: Timer },
-    ],
-  },
-  {
-    heading: "Study",
-    items: [
-      { href: "/notes", label: "Notes", icon: BookOpen },
-      { href: "/current-affairs", label: "Current Affairs", icon: Newspaper },
-      { href: "/resources", label: "Resources", icon: Library },
+      { href: "/admin", label: "Admin", icon: ShieldCheck },
     ],
   },
   {
