@@ -86,7 +86,7 @@ content-seeder (the data accessors and `useLocalProgress`/`useBookmarks` are the
 ## Route map
 ```
 Learn       /  ·  /syllabus  ·  /syllabus/[paper]  ·  /syllabus/[paper]/[unit]
-            /notes  ·  /notes/[paper]/[unit]
+            /notes  ·  /notes/[paper]  ·  /notes/[paper]/[unit]
             /answers  ·  /answers/[paper]  ·  /answers/[paper]/[questionId]
             /flashcards  ·  /flashcards/[deck]
             /current-affairs  ·  /current-affairs/[id]
@@ -100,7 +100,7 @@ Dashboard   /dashboard  ·  /admin  ·  /bookmarks  ·  /settings
   content. Stubbed as ComingSoon in v1.
 - **Backend**: a free DB + auth + deploy (Supabase / Neon / Turso, Vercel) — *provider decided
   later*. Code is structured so the data-access accessors are the swap point; `useLocalProgress`
-  is the progress swap point.
+  and `useBookmarks` are the progress/bookmark swap points.
 - Final content-authoring format for prose (Markdown/MDX vs typed TS) — "decide later"; v1 uses
   short typed placeholders.
 - **Separate MCQ product** (Stage I objective practice, quizzes, prelim mocks) — its own repo.
