@@ -7,6 +7,7 @@ import { MarkReadButton } from "@/components/notes/MarkReadButton";
 import { NoteToc } from "@/components/notes/NoteToc";
 import { NoteBody } from "@/components/notes/NoteBody";
 import { NoteAttachments } from "@/components/notes/NoteAttachments";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 export default async function NoteReaderPage({
   params,
@@ -31,7 +32,10 @@ export default async function NoteReaderPage({
       />
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{note.title}</h1>
-        <MarkReadButton unitId={unit.id} />
+        <div className="flex items-center gap-2">
+          <BookmarkButton type="note" id={unit.id} labeled />
+          <MarkReadButton unitId={unit.id} />
+        </div>
       </div>
 
       <Card className="mt-6">

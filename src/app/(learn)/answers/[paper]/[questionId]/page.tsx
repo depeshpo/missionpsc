@@ -6,6 +6,7 @@ import { getPaper } from "@/data/syllabus";
 import { getQuestion, kindLabel } from "@/data/subjective";
 import { AnswerEditor } from "@/components/answers/AnswerEditor";
 import { ModelAnswer } from "@/components/answers/ModelAnswer";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 export default async function AnswerQuestionPage({
   params,
@@ -27,6 +28,7 @@ export default async function AnswerQuestionPage({
         { label: `Paper ${paper.code}`, href: `/answers/${paper.id}` },
         { label: kindLabel(question.kind) },
       ]}
+      actions={<BookmarkButton type="question" id={question.id} labeled />}
     >
       <div className="space-y-6">
         <Card>

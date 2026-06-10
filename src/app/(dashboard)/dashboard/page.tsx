@@ -4,6 +4,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { STAGES, papersByStage, allUnits } from "@/data/syllabus";
+import { DashboardProgress } from "@/components/dashboard/DashboardProgress";
 
 const quickLinks = [
   { href: "/syllabus", label: "Syllabus Map", icon: Map, desc: "Track coverage across all papers" },
@@ -33,6 +34,13 @@ export default function DashboardPage() {
             </Card>
           );
         })}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Your progress
+        </h2>
+        <DashboardProgress />
       </div>
 
       <div className="mt-8">

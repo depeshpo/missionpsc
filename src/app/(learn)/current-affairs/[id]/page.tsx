@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { getCurrentAffair, formatDate } from "@/data/currentAffairs";
-import { BookmarkButton } from "@/components/current-affairs/BookmarkButton";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 export default async function CurrentAffairItemPage({
   params,
@@ -21,7 +21,7 @@ export default async function CurrentAffairItemPage({
         { label: "Current Affairs", href: "/current-affairs" },
         { label: item.title },
       ]}
-      actions={<BookmarkButton id={item.id} labeled />}
+      actions={<BookmarkButton type="current-affair" id={item.id} labeled />}
     >
       <div className="max-w-2xl space-y-5">
         <div className="flex flex-wrap items-center gap-2">

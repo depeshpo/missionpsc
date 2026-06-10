@@ -102,6 +102,19 @@ export const notes: Note[] = RAW.map((r) => ({
 }));
 
 // --- Accessors (the data boundary — read through these, not the array) ---
+export interface NoteHeading {
+  id: string;
+  text: string;
+  level: number;
+}
+
+/** The heading blocks of a note, for tables of contents and the sidebar tree. */
+export function noteHeadings(blocks: NoteBlock[]): NoteHeading[] {
+  return blocks
+    .filter((b) => b.type === "heading")
+    .map((b) => ({ id: b.id, text: b.text, level: b.level }));
+}
+
 export function getNoteByUnit(unitId: string): Note | undefined {
   return notes.find((n) => n.unitId === unitId);
 }

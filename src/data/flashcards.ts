@@ -95,3 +95,7 @@ export function getDeck(id: string): Deck | undefined {
 export function cardsByDeck(deckId: string): Flashcard[] {
   return flashcards.filter((c) => c.deckId === deckId);
 }
+
+export function getFlashcard(id: string): Flashcard | undefined {
+  return flashcards.find((c) => c.id === id);
+}

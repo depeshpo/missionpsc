@@ -64,11 +64,24 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
    (links + lazy expandable iframe preview + Open/Download); local files in `public/attachments/`
    (kept out of `public/notes/*` to avoid the `/notes/[paper]` route collision). Future: uploaded
    from the deferred `/admin` dashboard.
+   ✅ *Enhancement:* **collapsible section sidebar** — `NotesSidebar` is now a tree; each topic
+   independently expands (active auto-expands) to its nested `noteHeadings`, linking to
+   `#anchor`s. Topic page stays contents-first; `scroll-mt-20` (clears the sticky header) +
+   `scroll-smooth` on `<html>`.
 5. ✅ **Current Affairs** — `data/currentAffairs.ts` (seeded feed + accessors; `CurrentAffairItem`
    enriched with `body`/`source`/`tags`), date-grouped feed with scope tabs + tag-chip filter,
    bookmark/save toggle (`useLocalIdSet("bookmarks-current-affairs")`, for #6), and a detail
    reader. Components in `src/components/current-affairs/`.
-6. **Resources Library + Dashboard/Bookmarks polish** — `data/resources.ts`; aggregate progress.
+6. ✅ **Resources Library + Dashboard/Bookmarks polish** — `data/resources.ts` (seeded, categorized
+   + accessors) with search/category filter on `/resources`; **unified bookmarks** store
+   (`useBookmarks`, one `mission-psc:bookmarks` record list with `savedAt`) + generic
+   `BookmarkButton` wired across all five types (current-affairs, resources, notes, questions,
+   flashcards); `/bookmarks` aggregates them filterable by type + date window; `/dashboard`
+   gains live progress widgets (`DashboardProgress`). Components in `src/components/{bookmarks,
+   resources,dashboard}/`.
+
+**v1 build order complete.** Deferred next: backend (DB/auth/deploy) + admin authoring & AI
+content-seeder (the data accessors and `useLocalProgress`/`useBookmarks` are the swap points).
 
 ## Route map
 ```

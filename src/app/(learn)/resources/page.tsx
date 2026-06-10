@@ -1,10 +1,14 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { PageShell } from "@/components/layout/PageShell";
+import { resources, categories } from "@/data/resources";
+import { ResourcesList } from "@/components/resources/ResourcesList";
 
 export default function ResourcesPage() {
   return (
-    <ComingSoon
+    <PageShell
       title="Resources"
-      description="Curated links: Acts, the Constitution, Vienna Conventions, treaties, government publications, and portals."
-    />
+      description="Curated links: the Constitution and Acts, treaties, Vienna Conventions, government and MoFA portals, organizations, and references. Search, filter, and bookmark."
+    >
+      <ResourcesList resources={resources} categories={categories()} />
+    </PageShell>
   );
 }

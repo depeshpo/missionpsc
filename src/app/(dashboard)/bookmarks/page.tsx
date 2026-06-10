@@ -1,10 +1,13 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { PageShell } from "@/components/layout/PageShell";
+import { BookmarksList } from "@/components/bookmarks/BookmarksList";
 
 export default function BookmarksPage() {
   return (
-    <ComingSoon
+    <PageShell
       title="Bookmarks"
-      description="Saved questions, notes, and flashcards in one place."
-    />
+      description="Everything you've saved — current affairs, resources, notes, questions, and flashcards — filterable by type and date."
+    >
+      <BookmarksList />
+    </PageShell>
   );
 }

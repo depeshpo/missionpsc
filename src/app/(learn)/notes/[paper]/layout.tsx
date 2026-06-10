@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPaper } from "@/data/syllabus";
-import { unitsWithNotes } from "@/data/notes";
+import { unitsWithNotes, noteHeadings } from "@/data/notes";
 import { NotesSidebar, type SidebarItem } from "@/components/notes/NotesSidebar";
 
 export default async function NotesPaperLayout({
@@ -11,11 +11,12 @@ export default async function NotesPaperLayout({
   const paper = getPaper(paperId);
   if (!paper) notFound();
 
-  const items: SidebarItem[] = unitsWithNotes(paper.id).map(({ unit }) => ({
+  const items: SidebarItem[] = unitsWithNotes(paper.id).map(({ unit, note }) => ({
     unitId: unit.id,
     href: `/notes/${paper.id}/${unit.id}`,
     number: unit.number,
     title: unit.title,
+    headings: noteHeadings(note.body),
   }));
 
   return (

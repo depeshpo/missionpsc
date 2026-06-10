@@ -9,6 +9,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
 import { FLASHCARDS_KNOWN_KEY } from "./progress";
 import { FlipCard } from "./FlipCard";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 /**
  * Flip-through study session over a deck's cards. "Know" persists the card in
@@ -80,6 +81,7 @@ export function ReviewSession({ cards }: { cards: Flashcard[] }) {
           <span className="tabular-nums">
             Card {index + 1} of {total}
           </span>
+          <BookmarkButton type="flashcard" id={card.id} />
         </div>
         <ProgressBar value={index} max={total} />
       </div>

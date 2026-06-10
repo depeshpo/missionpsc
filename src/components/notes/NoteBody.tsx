@@ -14,7 +14,7 @@ export function NoteBody({ blocks }: { blocks: NoteBlock[] }) {
             <h2
               key={block.id}
               id={block.id}
-              className={cn("scroll-mt-6 font-semibold tracking-tight", size, i > 0 && "pt-2")}
+              className={cn("scroll-mt-20 font-semibold tracking-tight", size, i > 0 && "pt-2")}
             >
               {block.text}
             </h2>

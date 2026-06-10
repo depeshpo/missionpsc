@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Tabs } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BookmarkButton } from "./BookmarkButton";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(iso));
@@ -116,7 +116,7 @@ export function CurrentAffairsFeed({
                             {item.summary}
                           </p>
                         </div>
-                        <BookmarkButton id={item.id} />
+                        <BookmarkButton type="current-affair" id={item.id} />
                       </CardContent>
                     </Card>
                   </Link>
