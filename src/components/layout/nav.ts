@@ -2,8 +2,10 @@ import {
   LayoutDashboard,
   Map,
   PenLine,
+  PenSquare,
   Layers,
   BookOpen,
+  FileText,
   Newspaper,
   Library,
   Bookmark,
@@ -12,10 +14,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/** A child link under a collapsible nav item. No `href` (or `comingSoon`) = disabled. */
+export interface NavChild {
+  label: string;
+  icon: LucideIcon;
+  href?: string;
+  comingSoon?: boolean;
+}
+
 export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** When present, the item renders as a collapsible group with these children. */
+  children?: NavChild[];
 }
 
 export interface NavGroup {
@@ -38,7 +50,19 @@ export const dashboardNav: NavGroup[] = [
   {
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/admin", label: "Admin", icon: ShieldCheck },
+      {
+        href: "/admin",
+        label: "Admin",
+        icon: ShieldCheck,
+        children: [
+          { label: "Syllabus", icon: BookOpen, href: "/admin/syllabus" },
+          { label: "Notes", icon: FileText, comingSoon: true },
+          { label: "Questions", icon: PenSquare, comingSoon: true },
+          { label: "Flashcards", icon: Layers, comingSoon: true },
+          { label: "Current Affairs", icon: Newspaper, comingSoon: true },
+          { label: "Resources", icon: Library, comingSoon: true },
+        ],
+      },
     ],
   },
   {

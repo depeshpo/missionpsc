@@ -83,6 +83,43 @@ Grouping rule: *Learn = everything you read/study; Dashboard = your account / pr
 **v1 build order complete.** Deferred next: backend (DB/auth/deploy) + admin authoring & AI
 content-seeder (the data accessors and `useLocalProgress`/`useBookmarks` are the swap points).
 
+## Admin authoring (in progress) — `src/app/(dashboard)/admin/`
+Building the `/admin` authoring surface, **one content type per slice**, mirroring the content model
+(Syllabus is the spine; everything else hangs off it). Each type gets a list view + a typed
+create/edit form. **Persistence is deliberately not wired yet** — forms are interactive (local state,
+add/remove rows) but Save is inert ("preview only"); wiring it (localStorage merge over accessors,
+then DB) is a later slice. `/admin` stays ungated (auth deferred with the backend).
+- ✅ **Slice 1 — Foundation + Syllabus editor.** Form UI primitives (`Input`, `Textarea`, `Select`,
+  `Field` in `src/components/ui/`); admin **hub** at `/admin` (content-type grid with live counts,
+  Syllabus active + others "Coming soon"); **Syllabus** routes `/admin/syllabus` (list),
+  `/admin/syllabus/new`, `/admin/syllabus/[paper]` (edit, 404 on bad id); `PaperForm`
+  (`src/components/admin/`) mirrors `Paper→Section→Unit` 1:1 with add/remove sections/units/subtopics
+  and a read-only derived-id hint.
+- ✅ **Slice 1.1 — Admin nav & header UX.** Sidebar `Admin` item is now a collapsible group
+  (`NavItem.children` in `nav.ts`; reuses the NotesSidebar derived-`overrides` expand pattern) listing
+  all six content types — Syllabus active, the rest "soon"/disabled; auto-expands on `/admin/*`.
+  New `AdminPageShell` (`src/components/admin/`) gives admin sub-pages a **sticky** header with a
+  **Back** link (parent derived from the breadcrumb trail) — leaves the shared `PageShell` (and the
+  learn surface) untouched. `Topbar` is now a client component that narrows the search
+  (`max-w-md`→`max-w-xs`) on deep admin routes.
+- ✅ **Slice 1.2 — Paper overview + reorder + first real persistence.** `/admin/syllabus/[paper]`
+  is now a **manage view** (`PaperOverview`): **collapsible** sections (clean header — no unit-card
+  layer) that expand to show their **subtopics grouped by unit** (thin unit label only when a section
+  has >1 unit). A **Re-order** toggle button enters reorder mode (**@dnd-kit**): drag a section by
+  its whole header, and drag subtopics within a unit; edit/delete hide while reordering. Per-section
+  edit (→ `[paper]/edit`) + delete and **Reset to default** otherwise. Content text is edited only on
+  the edit page. Edits/reorders/deletes **persist to localStorage** via `useSyllabusPaper`
+  (whole-`Paper` override-over-seed on `useLocalProgress`); `PaperForm` Save is real when editing
+  (ids preserved, new items get fresh ids). New `[paper]/edit` route holds the form; a `useMounted`
+  gate initialises client state from the stored override. Scope guard: public `/syllabus` still seed.
+- ✅ **Slice 1.3 — Overview polish.** Dropped the Re-order mode: sections + topics are **always**
+  drag-reorderable via dedicated grip handles. The **whole section title** (not just the chevron)
+  toggles collapse (header = handle + collapse-button + edit/delete as siblings). Subtopics are
+  redesigned as proper **numbered "topic" cards** (ordinal badge + handle + hover state); multi-unit
+  sections show styled unit-label headings. Persistence + edit-page split unchanged.
+- ☐ Next: wire the **learn `/syllabus`** read path through the override too; then Notes, Questions,
+  Flashcards, Current Affairs, Resources editors; persist the **create-new-paper** flow.
+
 ## Route map
 ```
 Learn       /  ·  /syllabus  ·  /syllabus/[paper]  ·  /syllabus/[paper]/[unit]
@@ -91,7 +128,8 @@ Learn       /  ·  /syllabus  ·  /syllabus/[paper]  ·  /syllabus/[paper]/[unit
             /flashcards  ·  /flashcards/[deck]
             /current-affairs  ·  /current-affairs/[id]
             /resources
-Dashboard   /dashboard  ·  /admin  ·  /bookmarks  ·  /settings
+Dashboard   /dashboard  ·  /bookmarks  ·  /settings
+Admin       /admin  ·  /admin/syllabus  ·  /admin/syllabus/new  ·  /admin/syllabus/[paper]
 ```
 
 ## Deferred to later versions
