@@ -60,7 +60,7 @@ export const dashboardNav: NavGroup[] = [
           { label: "Questions", icon: PenSquare, comingSoon: true },
           { label: "Flashcards", icon: Layers, comingSoon: true },
           { label: "Current Affairs", icon: Newspaper, comingSoon: true },
-          { label: "Resources", icon: Library, comingSoon: true },
+          { label: "Resources", icon: Library, href: "/admin/resources" },
         ],
       },
     ],

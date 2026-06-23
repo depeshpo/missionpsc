@@ -34,8 +34,20 @@ const RAW: RawResource[] = [
 ];
 
 // --- Build typed resources with generated ids ---
-function slug(s: string) {
+export function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/**
+ * Stable id for a resource from its title: `res-<slug>` (the same shape as the
+ * seed). Falls back to / disambiguates with a short random suffix when the slug
+ * is empty or already taken. Call this in event handlers, never during render
+ * (`crypto.randomUUID()` is impure).
+ */
+export function makeResourceId(title: string, taken: string[] = []): string {
+  const base = `res-${slug(title).slice(0, 48).replace(/-+$/, "")}`;
+  if (base !== "res-" && !taken.includes(base)) return base;
+  return `${base === "res-" ? "res" : base}-${crypto.randomUUID().slice(0, 4)}`;
 }
 
 export const resources: Resource[] = RAW.map((r) => ({

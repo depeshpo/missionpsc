@@ -59,6 +59,7 @@ const types: ContentType[] = [
     label: "Resources",
     icon: Library,
     count: `${resources.length} links`,
+    href: "/admin/resources",
   },
 ];
 

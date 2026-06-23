@@ -117,8 +117,20 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   toggles collapse (header = handle + collapse-button + edit/delete as siblings). Subtopics are
   redesigned as proper **numbered "topic" cards** (ordinal badge + handle + hover state); multi-unit
   sections show styled unit-label headings. Persistence + edit-page split unchanged.
-- ☐ Next: wire the **learn `/syllabus`** read path through the override too; then Notes, Questions,
-  Flashcards, Current Affairs, Resources editors; persist the **create-new-paper** flow.
+- ✅ **Slice 1.4 — Learn read path through override.** Public `/syllabus`, `/syllabus/[paper]` and
+  `/syllabus/[paper]/[unit]` now resolve papers through the same override map, so admin edits show on
+  the study side. Server pages keep `notFound()` and pass the seed to client islands
+  (`SyllabusMap`/`PaperSyllabus`/`UnitView`) that read `useSyllabusOverrides` + `resolvePaper`
+  (SSR-safe — server snapshot is the seed). A unit removed in an override shows an EmptyState.
+- ✅ **Slice 1.5 — Resources editor (first flat-collection editor).** Full CRUD at
+  `/admin/resources` (list + `new` + `[id]/edit`), persisted via a **whole-collection** override
+  (`useResources.ts`, key `resources-overrides`, stores `Resource[] | null`; absent = seed) — the
+  reusable pattern for flat collections, distinct from syllabus's per-item map. `ResourceForm`
+  (mount-gated draft, category `<datalist>`, client-side id lookup so newly-added items are
+  editable) + `ResourcesAdminList` (grouped rows, edit/delete, Reset to default). Public
+  `/resources` reads through `useResources()`. Resources activated in the admin hub + sidebar.
+- ☐ Next: Current Affairs (reuses the flat-collection pattern), Notes, Questions, Flashcards
+  editors; persist the **create-new-paper** flow.
 
 ## Route map
 ```
@@ -130,6 +142,7 @@ Learn       /  ·  /syllabus  ·  /syllabus/[paper]  ·  /syllabus/[paper]/[unit
             /resources
 Dashboard   /dashboard  ·  /bookmarks  ·  /settings
 Admin       /admin  ·  /admin/syllabus  ·  /admin/syllabus/new  ·  /admin/syllabus/[paper]
+            /admin/resources  ·  /admin/resources/new  ·  /admin/resources/[id]/edit
 ```
 
 ## Deferred to later versions
