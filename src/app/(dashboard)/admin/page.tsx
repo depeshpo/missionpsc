@@ -44,6 +44,7 @@ const types: ContentType[] = [
     label: "Questions",
     icon: PenSquare,
     count: `${subjectiveQuestions.length} questions`,
+    href: "/admin/questions",
   },
   {
     label: "Flashcards",

@@ -147,7 +147,18 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   review route through the override via client `DeckGrid`/`DeckReview` (reusing
   `ReviewSession`/`DeckProgress`); a missing deck shows an EmptyState (like `UnitView`).
   Activated in hub + sidebar.
-- ☐ Next: Notes, Questions editors; persist the **create-new-paper** flow.
+- ✅ **Slice 1.8 — Questions editor + AdminPageShell condense fix.** Full CRUD at `/admin/questions`
+  (list grouped by paper + `new` + `[id]/edit`), flat whole-collection override
+  (`useSubjectiveQuestions.ts`, key `questions-overrides`). `QuestionForm` has a paper→section→kind
+  picker (section dropdown depends on the chosen paper), marks/prompt/passage/wordTarget/modelAnswer/
+  comma-sep keywords. All three public `/answers` pages route through the override via client
+  readers (`AnswersIndex`/`AnswersPaper`/`AnswerDetail`, reusing `AnswerEditor`/`ModelAnswer`/
+  `AttemptedBadge`); `answerablePapersFrom` is override-aware so adding a question makes its paper
+  answerable; missing ids show an EmptyState (like `CurrentAffairDetail`). **Fix:** `AdminPageShell`
+  now splits into a pinned compact bar (back + breadcrumbs + actions) + a non-sticky big title that
+  scrolls away; once scrolled, the title condenses inline next to the breadcrumbs (new client
+  `AdminHeader` via IntersectionObserver rooted on `main`). Questions activated in hub + sidebar.
+- ☐ Next: Notes editor; persist the **create-new-paper** flow.
 
 ## Route map
 ```
@@ -162,6 +173,7 @@ Admin       /admin  ·  /admin/syllabus  ·  /admin/syllabus/new  ·  /admin/syl
             /admin/resources  ·  /admin/resources/new  ·  /admin/resources/[id]/edit
             /admin/current-affairs  ·  /admin/current-affairs/new  ·  /admin/current-affairs/[id]/edit
             /admin/flashcards  ·  /admin/flashcards/new  ·  /admin/flashcards/[deck]
+            /admin/questions  ·  /admin/questions/new  ·  /admin/questions/[id]/edit
 ```
 
 ## Deferred to later versions

@@ -111,6 +111,17 @@ export const subjectiveQuestions: SubjectiveQuestion[] = Object.entries(RAW).fla
     qs.map((q, i) => ({ id: `${paperId}-q${i + 1}`, paperId, ...q })),
 );
 
+/**
+ * Unique question id scoped to its paper. The dashed-random suffix avoids
+ * colliding with the seed's numeric `${paperId}-q${n}` ids. Call in event
+ * handlers, never during render (`crypto.randomUUID()` is impure).
+ */
+export function makeQuestionId(paperId: string, taken: string[] = []): string {
+  let id = `${paperId}-q-${crypto.randomUUID().slice(0, 4)}`;
+  while (taken.includes(id)) id = `${paperId}-q-${crypto.randomUUID().slice(0, 4)}`;
+  return id;
+}
+
 // --- Accessors (the data boundary — read through these, not the array) ---
 export function questionsByPaper(paperId: string): SubjectiveQuestion[] {
   return subjectiveQuestions.filter((q) => q.paperId === paperId);

@@ -57,7 +57,7 @@ export const dashboardNav: NavGroup[] = [
         children: [
           { label: "Syllabus", icon: BookOpen, href: "/admin/syllabus" },
           { label: "Notes", icon: FileText, comingSoon: true },
-          { label: "Questions", icon: PenSquare, comingSoon: true },
+          { label: "Questions", icon: PenSquare, href: "/admin/questions" },
           { label: "Flashcards", icon: Layers, href: "/admin/flashcards" },
           { label: "Current Affairs", icon: Newspaper, href: "/admin/current-affairs" },
           { label: "Resources", icon: Library, href: "/admin/resources" },
