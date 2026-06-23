@@ -49,11 +49,13 @@ const types: ContentType[] = [
     label: "Flashcards",
     icon: Layers,
     count: `${decks.length} decks · ${flashcards.length} cards`,
+    href: "/admin/flashcards",
   },
   {
     label: "Current Affairs",
     icon: Newspaper,
     count: `${currentAffairs.length} items`,
+    href: "/admin/current-affairs",
   },
   {
     label: "Resources",

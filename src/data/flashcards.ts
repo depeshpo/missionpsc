@@ -69,6 +69,25 @@ const RAW: RawDeck[] = [
   },
 ];
 
+// --- Id helpers (call in event handlers, never in render — crypto is impure) ---
+export function slug(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** Stable deck id from its title; random suffix only on empty/collision. */
+export function makeDeckId(title: string, taken: string[] = []): string {
+  const base = slug(title).slice(0, 48).replace(/-+$/, "");
+  if (base !== "" && !taken.includes(base)) return base;
+  return `${base === "" ? "deck" : base}-${crypto.randomUUID().slice(0, 4)}`;
+}
+
+/** Unique card id scoped to its deck. */
+export function makeCardId(deckId: string, taken: string[] = []): string {
+  let id = `${deckId}-${crypto.randomUUID().slice(0, 6)}`;
+  while (taken.includes(id)) id = `${deckId}-${crypto.randomUUID().slice(0, 6)}`;
+  return id;
+}
+
 // --- Build typed cards (ids generated) and decks (cardCount derived) ---
 export const flashcards: Flashcard[] = RAW.flatMap((d) =>
   d.cards.map((c, i) => ({

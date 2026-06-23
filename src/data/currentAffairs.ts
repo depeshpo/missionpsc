@@ -78,8 +78,25 @@ const RAW: RawItem[] = [
 ];
 
 // --- Build typed items with generated ids, sorted newest first ---
-function slug(s: string) {
+export function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/**
+ * Stable id for an item from its date + title: `<date>-<slug>` (the same shape as
+ * the seed). Disambiguates with a short random suffix when the slug is empty or
+ * the id is already taken. Call this in event handlers, never during render
+ * (`crypto.randomUUID()` is impure).
+ */
+export function makeCurrentAffairId(
+  date: string,
+  title: string,
+  taken: string[] = [],
+): string {
+  const titleSlug = slug(title).slice(0, 40).replace(/-+$/, "");
+  const base = `${date}-${titleSlug}`;
+  if (titleSlug !== "" && !taken.includes(base)) return base;
+  return `${base}-${crypto.randomUUID().slice(0, 4)}`;
 }
 
 export const currentAffairs: CurrentAffairItem[] = RAW.map((r) => ({

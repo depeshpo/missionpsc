@@ -129,8 +129,25 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   (mount-gated draft, category `<datalist>`, client-side id lookup so newly-added items are
   editable) + `ResourcesAdminList` (grouped rows, edit/delete, Reset to default). Public
   `/resources` reads through `useResources()`. Resources activated in the admin hub + sidebar.
-- ☐ Next: Current Affairs (reuses the flat-collection pattern), Notes, Questions, Flashcards
-  editors; persist the **create-new-paper** flow.
+- ✅ **Slice 1.6 — Current Affairs editor (flat-collection pattern reused).** Full CRUD at
+  `/admin/current-affairs` (list + `new` + `[id]/edit`), persisted via a whole-collection
+  override (`useCurrentAffairs.ts`, key `current-affairs-overrides`). Richer fields than
+  resources: date, scope, summary, multi-paragraph `body`, comma-sep `tags`, optional `source`.
+  `CurrentAffairForm` (mount-gated, client-side id lookup) + `CurrentAffairsAdminList`. Both the
+  public feed (`CurrentAffairsFeed` now prop-less) **and the detail page** read through the
+  override — the detail became a client `CurrentAffairDetail` (resolves by id; EmptyState if
+  missing, like `UnitView`) so admin-added items are viewable. Activated in hub + sidebar.
+- ✅ **Slice 1.7 — Flashcards editor (first two-level collection).** Full CRUD at
+  `/admin/flashcards` (deck list + `new` + `[deck]` editor). Whole-collection override
+  (`useFlashcards.ts`, key `flashcards-overrides`, stores `{decks, cards}`; `cardCount`
+  recomputed on read so it never goes stale). `DeckForm` edits deck meta **plus its cards
+  nested in one form** (add/remove card rows, single `saveDeck` that upserts the deck +
+  replaces all its cards) — the `PaperForm` nested-rows approach, so no card sub-routes.
+  `FlashcardsAdminList` = deck grid w/ counts + edit/delete + reset. Public deck grid +
+  review route through the override via client `DeckGrid`/`DeckReview` (reusing
+  `ReviewSession`/`DeckProgress`); a missing deck shows an EmptyState (like `UnitView`).
+  Activated in hub + sidebar.
+- ☐ Next: Notes, Questions editors; persist the **create-new-paper** flow.
 
 ## Route map
 ```
@@ -143,6 +160,8 @@ Learn       /  ·  /syllabus  ·  /syllabus/[paper]  ·  /syllabus/[paper]/[unit
 Dashboard   /dashboard  ·  /bookmarks  ·  /settings
 Admin       /admin  ·  /admin/syllabus  ·  /admin/syllabus/new  ·  /admin/syllabus/[paper]
             /admin/resources  ·  /admin/resources/new  ·  /admin/resources/[id]/edit
+            /admin/current-affairs  ·  /admin/current-affairs/new  ·  /admin/current-affairs/[id]/edit
+            /admin/flashcards  ·  /admin/flashcards/new  ·  /admin/flashcards/[deck]
 ```
 
 ## Deferred to later versions
