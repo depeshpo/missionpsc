@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useAdminChrome } from "@/lib/hooks/useAdminChrome";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -50,9 +51,7 @@ export function Topbar() {
         </div>
       )}
       <ThemeToggle />
-      <span className="grid h-9 w-9 place-items-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
-        DP
-      </span>
+      <UserMenu />
     </header>
   );
 }
