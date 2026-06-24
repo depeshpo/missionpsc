@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -247,7 +248,15 @@ function SectionCard({
  * topics as numbered rows that drag-reorder within their unit. Content text is
  * edited on the edit page; all reorders/deletes persist via the override store.
  */
-export function PaperOverview({ seed }: { seed: Paper }) {
+export function PaperOverview({
+  seed,
+  created = false,
+}: {
+  seed: Paper;
+  /** True when this paper was created in the admin (no seed to reset to). */
+  created?: boolean;
+}) {
+  const router = useRouter();
   const { paper, update, reset, isOverridden } = useSyllabusPaper(seed);
   const mounted = useMounted();
   const sensors = useSensors(
@@ -298,6 +307,18 @@ export function PaperOverview({ seed }: { seed: Paper }) {
     update({ ...paper, sections: paper.sections.filter((s) => s.id !== section.id) });
   }
 
+  // For a seed paper, reset just drops the override (falls back to the seed).
+  // For a created paper there is no seed, so reset deletes it — confirm + leave.
+  function handleResetOrDelete() {
+    if (created) {
+      if (!window.confirm(`Delete "${paper.title}"? This can’t be undone.`)) return;
+      reset();
+      router.push("/admin/syllabus");
+      return;
+    }
+    reset();
+  }
+
   if (!mounted) {
     return (
       <div className="space-y-3">
@@ -314,8 +335,13 @@ export function PaperOverview({ seed }: { seed: Paper }) {
         <p className="text-xs text-muted-foreground">
           Drag the handles to reorder sections and topics. Click a title to expand.
         </p>
-        {isOverridden ? (
-          <Button variant="outline" size="sm" onClick={reset}>
+        {created ? (
+          <Button variant="outline" size="sm" onClick={handleResetOrDelete}>
+            <Trash2 className="h-4 w-4" />
+            Delete paper
+          </Button>
+        ) : isOverridden ? (
+          <Button variant="outline" size="sm" onClick={handleResetOrDelete}>
             <RotateCcw className="h-4 w-4" />
             Reset to default
           </Button>

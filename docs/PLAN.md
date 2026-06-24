@@ -184,7 +184,37 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   `useAdminChrome` external store (Topbar reads it); `AdminHeader` gains `floatCrumbs` (non-sticky bar
   + publishes crumbs while scrolled); set on the 10 add/edit pages + `NoteEditor` (notes carries the
   live title). List/overview pages unchanged.
-- ☐ Next: persist the **create-new-paper** flow (the last admin gap).
+- ✅ **Slice 1.12 — Persist create-new-paper (last admin gap closed).** Created papers get a
+  collision-proof id (`custom-${stage}-p${code}-${uuid6}`) in `draftToPaper`; `PaperForm`'s create
+  branch now persists via `useCreateSyllabusPaper` (writes the new paper into the same
+  `syllabus-overrides` map) and redirects to the paper overview. New override helpers
+  `addedPapers`/`resolveAllPapers` (override entries with no matching seed id) + a generalized
+  `useSyllabusPaperById(id, seed?)` (the old `useSyllabusPaper(seed)` now delegates to it). Lists
+  /readers fold in created papers: admin list became a client island (`AdminSyllabusList` via
+  `resolveAllPapers`); public `SyllabusMap` swapped `resolvePapers`→`resolveAllPapers`. Routes that
+  used server `getPaper`+`notFound()` now pass an **optional** seed to client screens
+  (`PaperOverviewScreen`/`PaperEditScreen` own the `AdminPageShell`; public `PaperSyllabus`/`UnitView`
+  resolve by id) that resolve the override-only paper after hydration and show an EmptyState for
+  truly-missing ids — `UnitView` derives its section from the unit id (no more `sectionId` prop).
+  Created papers show **Delete paper** (confirm + redirect) instead of "Reset to default".
+  **All admin authoring is now complete; the next phase is the backend.**
+
+## Backend phase (next) — DB + auth + deploy
+The deferred backend. Swap points: the data accessors + the override hooks (`useSyllabusPaper`,
+`useResources`, `useNotes`, `useCurrentAffairs`, `useFlashcards`, `useSubjectiveQuestions`) +
+`useLocalProgress` + `useBookmarks` + `noteFiles.ts` (IndexedDB). **Supabase is the recommended
+default** (Postgres + Auth + Storage + free tier, clean Vercel fit). Each item is its own
+slice/conversation:
+1. **Provider decision** (Supabase recommended) — set up project + env.
+2. **Schema** mirroring `lib/types.ts`.
+3. **Seed migration** — push current `src/data/*.ts` seeds into the DB once.
+4. **Read path** — public pages fetch from the DB (server components); retire the localStorage
+   content-override layer feature-by-feature (keep `useLocalProgress` for progress until auth).
+5. **Auth** to gate `/admin` (Supabase Auth; admin is currently ungated).
+6. **Admin mutations** write to the DB.
+7. **Per-user progress + bookmarks** move server-side (swap `useLocalProgress`/`useBookmarks`).
+8. **File storage** — `noteFiles.ts` IndexedDB → Supabase Storage.
+9. **Deploy** to Vercel.
 
 ## Route map
 ```

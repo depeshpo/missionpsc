@@ -2,7 +2,7 @@
 
 import type { Paper, Stage } from "@/lib/types";
 import {
-  resolvePapers,
+  resolveAllPapers,
   useSyllabusOverrides,
 } from "@/lib/hooks/useSyllabusPaper";
 import { PaperCard } from "./PaperCard";
@@ -23,7 +23,7 @@ export function SyllabusMap({
   papers: Paper[];
 }) {
   const overrides = useSyllabusOverrides();
-  const resolved = resolvePapers(overrides, papers);
+  const resolved = resolveAllPapers(overrides, papers);
 
   return (
     <div className="space-y-10">

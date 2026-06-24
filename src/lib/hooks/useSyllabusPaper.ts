@@ -26,6 +26,17 @@ export function resolvePapers(map: OverrideMap, seeds: Paper[]): Paper[] {
   return seeds.map((seed) => resolvePaper(map, seed));
 }
 
+/** Override-only papers — created from scratch, with no matching seed id. */
+export function addedPapers(map: OverrideMap, seeds: Paper[]): Paper[] {
+  const seedIds = new Set(seeds.map((s) => s.id));
+  return Object.values(map).filter((p) => !seedIds.has(p.id));
+}
+
+/** Seed papers resolved against overrides, plus any created-from-scratch papers. */
+export function resolveAllPapers(map: OverrideMap, seeds: Paper[]): Paper[] {
+  return [...resolvePapers(map, seeds), ...addedPapers(map, seeds)];
+}
+
 /**
  * Read-only subscription to the whole override map, for the public reader.
  * SSR-safe: `useLocalProgress` returns the seed/initial on the server, so the
@@ -36,27 +47,47 @@ export function useSyllabusOverrides(): OverrideMap {
   return map;
 }
 
-export function useSyllabusPaper(seed: Paper) {
+/**
+ * Editable handle for one paper by id. `seed` is the seed paper when one exists
+ * (so `reset` falls back to it); created-from-scratch papers pass no seed, and
+ * `reset` deletes their override outright. `paper` is undefined only when an id
+ * has neither a seed nor an override (a deleted/unknown id).
+ */
+export function useSyllabusPaperById(id: string, seed?: Paper) {
   const [map, setMap] = useLocalProgress<OverrideMap>(SYLLABUS_OVERRIDES_KEY, EMPTY);
 
-  const paper = map[seed.id] ?? seed;
-  const isOverridden = seed.id in map;
+  const paper = map[id] ?? seed;
+  const isOverridden = id in map;
 
   const update = useCallback(
-    (next: Paper) => setMap((prev) => ({ ...prev, [seed.id]: next })),
-    [setMap, seed.id],
+    (next: Paper) => setMap((prev) => ({ ...prev, [id]: next })),
+    [setMap, id],
   );
 
   const reset = useCallback(
     () =>
       setMap((prev) => {
-        if (!(seed.id in prev)) return prev;
+        if (!(id in prev)) return prev;
         const next = { ...prev };
-        delete next[seed.id];
+        delete next[id];
         return next;
       }),
-    [setMap, seed.id],
+    [setMap, id],
   );
 
   return { paper, update, reset, isOverridden };
+}
+
+export function useSyllabusPaper(seed: Paper) {
+  const handle = useSyllabusPaperById(seed.id, seed);
+  return { ...handle, paper: handle.paper ?? seed };
+}
+
+/** Persist a brand-new paper into the override map (keyed by its id). */
+export function useCreateSyllabusPaper() {
+  const [, setMap] = useLocalProgress<OverrideMap>(SYLLABUS_OVERRIDES_KEY, EMPTY);
+  return useCallback(
+    (paper: Paper) => setMap((prev) => ({ ...prev, [paper.id]: paper })),
+    [setMap],
+  );
 }

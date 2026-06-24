@@ -8,26 +8,61 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { resolvePaper, useSyllabusOverrides } from "@/lib/hooks/useSyllabusPaper";
+import { useMounted } from "@/lib/hooks/useMounted";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { UnitCheckbox } from "./UnitCheckbox";
 
 /**
- * Client reader for a single unit. Resolves the seed paper through the admin
- * override map and looks up the section/unit by id within it — so edited
- * subtopics render, and a unit removed in an override shows an empty state
- * instead of stale seed content.
+ * Client reader for a single unit. Resolves the paper through the admin override
+ * map (or an override-only paper created in the admin) and looks up the section
+ * /unit by id within it — so edited subtopics render, and a removed unit or
+ * missing paper shows an empty state instead of stale seed content.
  */
 export function UnitView({
-  paper: seed,
-  sectionId,
+  paperId,
   unitId,
+  seed,
 }: {
-  paper: Paper;
-  sectionId: string;
+  paperId: string;
   unitId: string;
+  seed?: Paper;
 }) {
   const overrides = useSyllabusOverrides();
-  const paper = resolvePaper(overrides, seed);
-  const section = paper.sections.find((s) => s.id === sectionId);
+  const mounted = useMounted();
+  const paper = seed ? resolvePaper(overrides, seed) : overrides[paperId];
+
+  if (!paper) {
+    if (!mounted) {
+      return (
+        <PageShell title="Unit" breadcrumbs={[{ label: "Syllabus", href: "/syllabus" }]}>
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </PageShell>
+      );
+    }
+    return (
+      <PageShell
+        title="Unit not found"
+        breadcrumbs={[{ label: "Syllabus", href: "/syllabus" }]}
+      >
+        <EmptyState
+          icon={FileX}
+          title="This paper isn’t in the syllabus"
+          description="It may have been removed. Head back to see the current papers."
+          action={
+            <Link
+              href="/syllabus"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary"
+            >
+              Back to Syllabus
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          }
+        />
+      </PageShell>
+    );
+  }
+
+  const section = paper.sections.find((s) => s.units.some((u) => u.id === unitId));
   const unit = section?.units.find((u) => u.id === unitId);
 
   if (!section || !unit) {

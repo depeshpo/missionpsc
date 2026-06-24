@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save, Info, Check, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, Save, Check, X } from "lucide-react";
 import type { Paper, PaperCode, Section, Stage, Unit } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Field } from "@/components/ui/Field";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { useSyllabusPaper } from "@/lib/hooks/useSyllabusPaper";
+import { useSyllabusPaper, useCreateSyllabusPaper } from "@/lib/hooks/useSyllabusPaper";
 import { useMounted } from "@/lib/hooks/useMounted";
 
 // --- Author-friendly draft shapes (ids carried so edits preserve identity) ---
@@ -82,7 +83,11 @@ function toDraft(paper?: Paper): PaperDraft {
 // ones for newly added sections/units (called from a submit handler, never
 // during render, so crypto.randomUUID is fine).
 function draftToPaper(draft: PaperDraft, base?: Paper): Paper {
-  const paperId = base?.id ?? `${draft.stage}-p${draft.code.toLowerCase()}`;
+  // Created papers get a unique id so they never collide with (or clobber) a
+  // seed paper that shares the same stage+code; edits keep the existing id.
+  const paperId =
+    base?.id ??
+    `custom-${draft.stage}-p${draft.code.toLowerCase()}-${crypto.randomUUID().slice(0, 6)}`;
   const sections: Section[] = draft.sections.map((s) => {
     const sectionId = s.id ?? `${paperId}-s-${crypto.randomUUID().slice(0, 8)}`;
     const units: Unit[] = s.units.map((u) => ({
@@ -114,12 +119,28 @@ function draftToPaper(draft: PaperDraft, base?: Paper): Paper {
 }
 
 /**
- * Syllabus paper editor. Edit mode persists to the syllabus override store;
- * create mode (`/admin/syllabus/new`) stays a non-persisting preview for now.
+ * Syllabus paper editor. Both modes persist to the syllabus override store:
+ * edit updates the paper in place; create writes a new paper (unique id) and
+ * redirects to its overview.
  */
 export function PaperForm({ initial }: { initial?: Paper }) {
   if (initial) return <EditPaperForm seed={initial} />;
-  return <PaperFormEditor mode="create" onSave={() => {}} />;
+  return <CreatePaperForm />;
+}
+
+/** Create wrapper: persists the new paper, then lands on its overview. */
+function CreatePaperForm() {
+  const create = useCreateSyllabusPaper();
+  const router = useRouter();
+  return (
+    <PaperFormEditor
+      mode="create"
+      onSave={(paper) => {
+        create(paper);
+        router.push(`/admin/syllabus/${paper.id}`);
+      }}
+    />
+  );
 }
 
 /**
@@ -153,10 +174,10 @@ function PaperFormEditor({
 }) {
   const [draft, setDraft] = useState<PaperDraft>(() => toDraft(current));
   const [saved, setSaved] = useState(false);
-  const persists = mode === "edit";
 
-  // Stable id of the paper being edited (or derived preview id for create).
-  const paperId = current?.id ?? `${draft.stage}-p${draft.code.toLowerCase()}`;
+  // Stable id of the paper being edited (shown only in edit mode; created
+  // papers get their unique id assigned on save).
+  const paperId = current?.id;
 
   function setPaper<K extends keyof PaperDraft>(key: K, value: PaperDraft[K]) {
     setSaved(false);
@@ -270,9 +291,13 @@ function PaperFormEditor({
             htmlFor="title"
             required
             hint={
-              <>
-                id will be <code className="font-mono">{paperId}</code>
-              </>
+              mode === "edit" ? (
+                <>
+                  id: <code className="font-mono">{paperId}</code>
+                </>
+              ) : (
+                "A unique id is assigned when you create the paper."
+              )
             }
           >
             <Input
@@ -467,28 +492,20 @@ function PaperFormEditor({
 
       {/* Save status */}
       {saved ? (
-        persists ? (
-          <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-sm">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-            <span>Saved — changes are stored on this device.</span>
-          </div>
-        ) : (
-          <div className="flex items-start gap-2 rounded-lg border border-border bg-accent/50 p-3 text-sm">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>
-              Preview only — creating new papers isn&apos;t wired up yet. Editing an
-              existing paper does persist.
-            </span>
-          </div>
-        )
+        <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-sm">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+          <span>Saved — changes are stored on this device.</span>
+        </div>
       ) : null}
       <div className="flex items-center gap-3">
         <Button type="submit">
           <Save className="h-4 w-4" />
-          {persists ? "Save changes" : "Create paper"}
+          {mode === "edit" ? "Save changes" : "Create paper"}
         </Button>
         <span className="text-xs text-muted-foreground">
-          {persists ? "Changes save to this device" : "UI preview · nothing is saved"}
+          {mode === "edit"
+            ? "Changes save to this device"
+            : "Creates a paper on this device"}
         </span>
       </div>
     </form>
