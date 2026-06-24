@@ -1,15 +1,12 @@
-import type { NoteBlock } from "@/lib/types";
+import type { NoteSection } from "@/lib/types";
 
 /**
- * In-page table of contents built from a note's heading blocks. Indents by the
- * heading `level` relative to the shallowest heading, so any depth nests
- * correctly. Anchor links target the heading `id`s.
+ * In-page table of contents built from a note's section headings. Each section
+ * is one entry; anchor links target the section `id`s.
  */
-export function NoteToc({ blocks }: { blocks: NoteBlock[] }) {
-  const headings = blocks.filter((b) => b.type === "heading");
-  if (headings.length === 0) return null;
-
-  const minLevel = Math.min(...headings.map((h) => h.level));
+export function NoteToc({ sections }: { sections: NoteSection[] }) {
+  const entries = sections.filter((s) => s.heading.trim() !== "");
+  if (entries.length === 0) return null;
 
   return (
     <nav aria-label="Contents" className="text-sm">
@@ -17,10 +14,10 @@ export function NoteToc({ blocks }: { blocks: NoteBlock[] }) {
         Contents
       </p>
       <ul className="space-y-1">
-        {headings.map((h) => (
-          <li key={h.id} style={{ paddingLeft: `${(h.level - minLevel) * 0.875}rem` }}>
-            <a href={`#${h.id}`} className="text-muted-foreground hover:text-primary">
-              {h.text}
+        {entries.map((s) => (
+          <li key={s.id}>
+            <a href={`#${s.id}`} className="text-muted-foreground hover:text-primary">
+              {s.heading}
             </a>
           </li>
         ))}

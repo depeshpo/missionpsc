@@ -56,7 +56,7 @@ export const dashboardNav: NavGroup[] = [
         icon: ShieldCheck,
         children: [
           { label: "Syllabus", icon: BookOpen, href: "/admin/syllabus" },
-          { label: "Notes", icon: FileText, comingSoon: true },
+          { label: "Notes", icon: FileText, href: "/admin/notes" },
           { label: "Questions", icon: PenSquare, href: "/admin/questions" },
           { label: "Flashcards", icon: Layers, href: "/admin/flashcards" },
           { label: "Current Affairs", icon: Newspaper, href: "/admin/current-affairs" },

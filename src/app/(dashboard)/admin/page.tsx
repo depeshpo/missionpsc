@@ -39,6 +39,7 @@ const types: ContentType[] = [
     label: "Notes",
     icon: FileText,
     count: `${notes.length} notes`,
+    href: "/admin/notes",
   },
   {
     label: "Questions",

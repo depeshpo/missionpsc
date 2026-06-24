@@ -158,7 +158,27 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   now splits into a pinned compact bar (back + breadcrumbs + actions) + a non-sticky big title that
   scrolls away; once scrolled, the title condenses inline next to the breadcrumbs (new client
   `AdminHeader` via IntersectionObserver rooted on `main`). Questions activated in hub + sidebar.
-- ☐ Next: Notes editor; persist the **create-new-paper** flow.
+- ✅ **Slice 1.9 — Notes editor (last content-type editor).** Full CRUD at `/admin/notes` (list
+  grouped by paper + `new` + `[id]/edit`), flat whole-collection override (`useNotes.ts`, key
+  `notes-overrides`; one note per unit, id `note-${unitId}`, upserted by `saveNote`). `NoteForm`
+  has a paper→section→unit picker (locked in edit since the unit is the note's identity) + a nested
+  **block-body editor** (heading/paragraph/list rows with type/level selects, up/down reorder,
+  add/remove) reusing `buildBlocks` (exported from `data/notes.ts`) to regenerate deduped heading
+  anchor ids on save + an **attachments editor** (pdf/link rows). All four public `/notes` pages
+  route through the override via client readers (`NotesIndex`/`NotesPaperOverview`/`NoteReader` +
+  `NotesSidebarLive` feeding the existing `NotesSidebar` from the layout), reusing
+  `NoteBody`/`NoteToc`/`NoteAttachments`/`MarkReadButton`; missing notes show an EmptyState. Notes
+  activated in hub + sidebar — **all six admin editors are now live.**
+- ✅ **Slice 1.10 — Notes redesigned to rich sectioned content + header title-on-scroll.** The note
+  model is now a main title + ordered **subtitle sections**, each with a **compulsory rich-text body**
+  (hand-rolled `RichTextEditor` contentEditable, stores HTML) plus optional, any-count, **drag-rerankable**
+  YouTube embeds, file **attachments** (drag-drop/upload stored in **IndexedDB** via `lib/noteFiles.ts`,
+  no backend), and reference links. `NoteEditor` owns the `AdminPageShell` so the **breadcrumb/header title
+  tracks the live draft title** and stays pinned on scroll. Reorder via a generic `SortableList` (dnd-kit).
+  Public reader rewritten (`NoteContent` renders HTML + YT iframes + `NoteFileList` from IndexedDB + links;
+  `NoteToc`/sidebar from section headings). Replaced `NoteBlock`/`NoteAttachment`; removed
+  `NoteForm`/`NoteBody`/`NoteAttachments`. `.note-prose` styles in globals.css.
+- ☐ Next: persist the **create-new-paper** flow (the last admin gap).
 
 ## Route map
 ```
@@ -174,6 +194,7 @@ Admin       /admin  ·  /admin/syllabus  ·  /admin/syllabus/new  ·  /admin/syl
             /admin/current-affairs  ·  /admin/current-affairs/new  ·  /admin/current-affairs/[id]/edit
             /admin/flashcards  ·  /admin/flashcards/new  ·  /admin/flashcards/[deck]
             /admin/questions  ·  /admin/questions/new  ·  /admin/questions/[id]/edit
+            /admin/notes  ·  /admin/notes/new  ·  /admin/notes/[id]/edit
 ```
 
 ## Deferred to later versions

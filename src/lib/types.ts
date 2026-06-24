@@ -89,20 +89,39 @@ export interface Deck {
 }
 
 /**
- * A block of note content. Headings carry an arbitrary `level` (1..n) so the
- * reader can build a nested table of contents, and an `id` anchor generated at
- * build time. Typed blocks now; MDX is the likely future format.
- */
-export type NoteBlock =
-  | { type: "heading"; level: number; text: string; id: string }
-  | { type: "paragraph"; text: string }
-  | { type: "list"; items: string[] };
+/** A YouTube embed within a section (stored as the original URL). */
+export interface NoteVideo {
+  id: string;
+  url: string;
+}
 
-/** A file/link attached to a note (e.g. a source PDF). Display deferred. */
-export interface NoteAttachment {
+/** A reference link within a section. */
+export interface NoteLink {
+  id: string;
   title: string;
-  href: string;
-  kind?: "pdf" | "link";
+  url: string;
+}
+
+/** A file attachment; the blob lives in IndexedDB under `ref` (no backend yet). */
+export interface NoteFile {
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+  ref: string;
+}
+
+/**
+ * A "subtitle" section of a note: a heading + compulsory rich-text body (HTML),
+ * plus optional, any-count, drag-rerankable videos, files, and links.
+ */
+export interface NoteSection {
+  id: string;
+  heading: string;
+  html: string;
+  videos: NoteVideo[];
+  files: NoteFile[];
+  links: NoteLink[];
 }
 
 export interface Note {
@@ -110,8 +129,7 @@ export interface Note {
   /** Syllabus unit this note belongs to. */
   unitId: string;
   title: string;
-  body: NoteBlock[];
-  attachments?: NoteAttachment[];
+  sections: NoteSection[];
 }
 
 export interface CurrentAffairItem {
