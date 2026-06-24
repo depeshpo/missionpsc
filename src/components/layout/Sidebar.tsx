@@ -13,7 +13,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function Sidebar({ className }: { className?: string }) {
+export function Sidebar({
+  className,
+  isAdmin = false,
+}: {
+  className?: string;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -41,7 +47,11 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
-        {dashboardNav.map((group, gi) => (
+        {dashboardNav.map((group, gi) => {
+          // Hide admin-only items from non-admins; drop a group left empty.
+          const items = group.items.filter((item) => !item.adminOnly || isAdmin);
+          if (!items.length) return null;
+          return (
           <div key={gi}>
             {group.heading ? (
               <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -49,7 +59,7 @@ export function Sidebar({ className }: { className?: string }) {
               </p>
             ) : null}
             <ul className="space-y-0.5">
-              {group.items.map((item) => {
+              {items.map((item) => {
                 const active = isActive(pathname, item.href);
                 const Icon = item.icon;
                 const open = item.children ? isOpen(item.href) : false;
@@ -131,7 +141,8 @@ export function Sidebar({ className }: { className?: string }) {
               })}
             </ul>
           </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">

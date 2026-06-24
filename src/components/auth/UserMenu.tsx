@@ -1,35 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
 import { signOut } from "@/app/login/actions";
 
 /**
- * Topbar account control. Reads the auth state via the browser Supabase client:
- * shows a sign-out button + avatar when signed in, a "Log in" link otherwise.
+ * Topbar account control. Shows a sign-out button + avatar when signed in, a
+ * "Log in" link otherwise. (Inside the dashboard the user is always signed in,
+ * but this stays correct during the brief logout transition.)
  */
 export function UserMenu() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setEmail(data.user?.email ?? null);
-      setReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user?.email ?? null);
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  const { email, ready } = useSupabaseUser();
 
   if (ready && !email) {
     return (

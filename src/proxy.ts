@@ -2,8 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Next 16 renamed `middleware` → `proxy` (nodejs runtime, no edge). This refreshes
-// the Supabase auth session on every request and gates the /admin surface to admins.
+// the Supabase auth session on every request and gates the dashboard surface:
+// any of these prefixes requires a logged-in user, and /admin additionally
+// requires the admin role.
+const AUTH_PREFIXES = ["/dashboard", "/bookmarks", "/settings", "/admin"];
 const ADMIN_PREFIX = "/admin";
+
+function matchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(prefix + "/");
+}
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -34,8 +41,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const needsAuth = AUTH_PREFIXES.some((p) => matchesPrefix(pathname, p));
 
-  if (pathname.startsWith(ADMIN_PREFIX)) {
+  if (needsAuth) {
+    // Not logged in → send to login, remembering where they were headed.
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -43,17 +52,20 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    // Logged in but hitting /admin without the admin role → back to dashboard.
+    if (matchesPrefix(pathname, ADMIN_PREFIX)) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-    if (profile?.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.search = `?error=${encodeURIComponent("Your account isn’t an admin.")}`;
-      return NextResponse.redirect(url);
+      if (profile?.role !== "admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

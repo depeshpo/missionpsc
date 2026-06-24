@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LayoutDashboard } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { learnNav } from "./nav";
 import { ThemeToggle } from "./ThemeToggle";
+import { AuthNav } from "@/components/auth/AuthNav";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
@@ -46,13 +47,7 @@ export function LearnHeader() {
 
         <div className="flex shrink-0 items-center gap-2">
           <ThemeToggle />
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Dashboard
-          </Link>
+          <AuthNav />
         </div>
       </div>
     </header>

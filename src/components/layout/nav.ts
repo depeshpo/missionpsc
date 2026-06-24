@@ -28,6 +28,8 @@ export interface NavItem {
   icon: LucideIcon;
   /** When present, the item renders as a collapsible group with these children. */
   children?: NavChild[];
+  /** Only shown to admins (hidden from non-admin users). */
+  adminOnly?: boolean;
 }
 
 export interface NavGroup {
@@ -54,6 +56,7 @@ export const dashboardNav: NavGroup[] = [
         href: "/admin",
         label: "Admin",
         icon: ShieldCheck,
+        adminOnly: true,
         children: [
           { label: "Syllabus", icon: BookOpen, href: "/admin/syllabus" },
           { label: "Notes", icon: FileText, href: "/admin/notes" },
