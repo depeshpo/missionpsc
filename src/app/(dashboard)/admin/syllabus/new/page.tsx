@@ -4,6 +4,7 @@ import { PaperForm } from "@/components/admin/PaperForm";
 export default function NewPaperPage() {
   return (
     <AdminPageShell
+      floatCrumbs
       title="New paper"
       description="Add a paper with its sections and units."
       breadcrumbs={[

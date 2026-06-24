@@ -178,6 +178,12 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   Public reader rewritten (`NoteContent` renders HTML + YT iframes + `NoteFileList` from IndexedDB + links;
   `NoteToc`/sidebar from section headings). Replaced `NoteBlock`/`NoteAttachment`; removed
   `NoteForm`/`NoteBody`/`NoteAttachments`. `.note-prose` styles in globals.css.
+- ✅ **Slice 1.11 — Admin add/edit: float the breadcrumb into the Topbar on scroll.** On the add/edit
+  forms (all six types), scrolling now drops the AdminHeader's own pinned bar and shows the breadcrumb
+  in the Topbar next to an icon-shrunk search — one chrome row, more space. Bridged via a tiny
+  `useAdminChrome` external store (Topbar reads it); `AdminHeader` gains `floatCrumbs` (non-sticky bar
+  + publishes crumbs while scrolled); set on the 10 add/edit pages + `NoteEditor` (notes carries the
+  live title). List/overview pages unchanged.
 - ☐ Next: persist the **create-new-paper** flow (the last admin gap).
 
 ## Route map

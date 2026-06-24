@@ -6,6 +6,7 @@ export default function NewCurrentAffairPage() {
   const today = new Date().toISOString().slice(0, 10);
   return (
     <AdminPageShell
+      floatCrumbs
       title="New item"
       description="Add a dated item to the Current Affairs feed."
       breadcrumbs={[

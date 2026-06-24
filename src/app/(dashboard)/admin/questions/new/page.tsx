@@ -4,6 +4,7 @@ import { QuestionForm } from "@/components/admin/QuestionForm";
 export default function NewQuestionPage() {
   return (
     <AdminPageShell
+      floatCrumbs
       title="New question"
       description="Add a subjective question to the answer-writing bank."
       breadcrumbs={[

@@ -9,6 +9,7 @@ export default async function EditResourcePage({
   const { id } = await params;
   return (
     <AdminPageShell
+      floatCrumbs
       title="Edit resource"
       description="Update this link. Changes show on the public Resources page."
       breadcrumbs={[

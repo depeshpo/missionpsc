@@ -9,6 +9,7 @@ export default async function EditQuestionPage({
   const { id } = await params;
   return (
     <AdminPageShell
+      floatCrumbs
       title="Edit question"
       description="Update this question. Changes show on the public Answer Writing pages."
       breadcrumbs={[

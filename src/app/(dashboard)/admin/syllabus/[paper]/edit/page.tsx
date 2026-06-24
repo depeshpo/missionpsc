@@ -14,6 +14,7 @@ export default async function EditPaperPage({
 
   return (
     <AdminPageShell
+      floatCrumbs
       title={`Edit ${paper.title}`}
       description={`Paper ${paper.code} · ${paper.totalMarks} marks`}
       breadcrumbs={[

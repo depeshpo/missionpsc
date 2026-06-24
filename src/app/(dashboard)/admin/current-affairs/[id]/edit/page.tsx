@@ -9,6 +9,7 @@ export default async function EditCurrentAffairPage({
   const { id } = await params;
   return (
     <AdminPageShell
+      floatCrumbs
       title="Edit item"
       description="Update this item. Changes show on the public Current Affairs feed."
       breadcrumbs={[

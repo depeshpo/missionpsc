@@ -13,12 +13,15 @@ export function AdminPageShell({
   description,
   breadcrumbs,
   actions,
+  floatCrumbs,
   children,
 }: {
   title: string;
   description?: string;
   breadcrumbs?: Crumb[];
   actions?: React.ReactNode;
+  /** Add/edit pages: float the breadcrumb up to the Topbar on scroll (one chrome row). */
+  floatCrumbs?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -28,6 +31,7 @@ export function AdminPageShell({
         description={description}
         breadcrumbs={breadcrumbs}
         actions={actions}
+        floatCrumbs={floatCrumbs}
       />
       <div className="mx-auto w-full max-w-6xl px-6 py-6">{children}</div>
     </div>

@@ -4,6 +4,7 @@ import { DeckForm } from "@/components/admin/DeckForm";
 export default function NewDeckPage() {
   return (
     <AdminPageShell
+      floatCrumbs
       title="New deck"
       description="Add a flashcard deck and its cards."
       breadcrumbs={[

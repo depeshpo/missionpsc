@@ -9,6 +9,7 @@ export default async function EditDeckPage({
   const { deck } = await params;
   return (
     <AdminPageShell
+      floatCrumbs
       title="Edit deck"
       description="Update this deck and its cards. Changes show on the public Flashcards page."
       breadcrumbs={[

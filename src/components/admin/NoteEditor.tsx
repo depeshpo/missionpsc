@@ -74,6 +74,7 @@ export function NoteEditor({ id }: { id?: string }) {
   if (!mounted) {
     return (
       <AdminPageShell
+        floatCrumbs
         title={id ? "Edit note" : "New note"}
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
@@ -130,7 +131,7 @@ function NoteEditorInner({ id }: { id?: string }) {
 
   if (editing && !existing) {
     return (
-      <AdminPageShell title={shellTitle} breadcrumbs={crumbs}>
+      <AdminPageShell floatCrumbs title={shellTitle} breadcrumbs={crumbs}>
         <EmptyState
           icon={FileX}
           title="This note no longer exists"
@@ -252,7 +253,7 @@ function NoteEditorInner({ id }: { id?: string }) {
   const existingUnit = editing ? getUnit(draft.unitId) : undefined;
 
   return (
-    <AdminPageShell title={shellTitle} breadcrumbs={crumbs}>
+    <AdminPageShell floatCrumbs title={shellTitle} breadcrumbs={crumbs}>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* hidden file input shared by all section dropzones */}
         <input
