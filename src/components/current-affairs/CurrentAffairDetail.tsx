@@ -1,47 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { ExternalLink, ArrowRight, Newspaper } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import type { CurrentAffairItem } from "@/lib/types";
 import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
-import { useCurrentAffairs } from "@/lib/hooks/useCurrentAffairs";
 import { formatDate } from "@/data/currentAffairs";
 
 /**
- * Public reader for a single current-affairs item. Resolves through the override
- * (so admin-added/edited items appear); a missing id shows an empty state rather
- * than a 404, mirroring the syllabus UnitView.
+ * Public reader for a single current-affairs item (content from the DB, passed
+ * by the server page, which 404s a missing id). Stays a client component for
+ * the bookmark button.
  */
-export function CurrentAffairDetail({ id }: { id: string }) {
-  const items = useCurrentAffairs();
-  const item = items.find((i) => i.id === id);
-
-  if (!item) {
-    return (
-      <PageShell
-        title="Item not available"
-        breadcrumbs={[{ label: "Current Affairs", href: "/current-affairs" }]}
-      >
-        <EmptyState
-          icon={Newspaper}
-          title="This item is no longer available"
-          description="It may have been removed. Browse the latest in the feed."
-          action={
-            <Link
-              href="/current-affairs"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary"
-            >
-              Back to Current Affairs
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          }
-        />
-      </PageShell>
-    );
-  }
-
+export function CurrentAffairDetail({ item }: { item: CurrentAffairItem }) {
   return (
     <PageShell
       title={item.title}

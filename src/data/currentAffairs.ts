@@ -111,8 +111,13 @@ export function getCurrentAffair(id: string): CurrentAffairItem | undefined {
 
 /** Distinct tags across all items, alphabetical — for the feed filter. */
 export function allTags(): string[] {
+  return currentAffairTags(currentAffairs);
+}
+
+/** Distinct tags across any list, alphabetical — for the feed filter. */
+export function currentAffairTags(list: CurrentAffairItem[]): string[] {
   const set = new Set<string>();
-  for (const item of currentAffairs) for (const t of item.tags ?? []) set.add(t);
+  for (const item of list) for (const t of item.tags ?? []) set.add(t);
   return [...set].sort();
 }
 

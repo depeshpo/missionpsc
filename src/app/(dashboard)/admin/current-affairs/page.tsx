@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CurrentAffairsAdminList } from "@/components/admin/CurrentAffairsAdminList";
+import { getCurrentAffairs } from "@/lib/db/currentAffairs";
 
-export default function AdminCurrentAffairsPage() {
+export default async function AdminCurrentAffairsPage() {
+  const items = await getCurrentAffairs();
   return (
     <AdminPageShell
       title="Current Affairs"
@@ -22,7 +24,7 @@ export default function AdminCurrentAffairsPage() {
         </Link>
       }
     >
-      <CurrentAffairsAdminList />
+      <CurrentAffairsAdminList items={items} />
     </AdminPageShell>
   );
 }

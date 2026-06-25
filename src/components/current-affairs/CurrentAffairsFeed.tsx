@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Tabs } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
-import { useCurrentAffairs, currentAffairTags } from "@/lib/hooks/useCurrentAffairs";
+import { currentAffairTags } from "@/data/currentAffairs";
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(iso));
@@ -24,8 +24,7 @@ const scopeTabs = [
   { id: "international", label: "International" },
 ];
 
-export function CurrentAffairsFeed() {
-  const items = useCurrentAffairs();
+export function CurrentAffairsFeed({ items }: { items: CurrentAffairItem[] }) {
   const tags = useMemo(() => currentAffairTags(items), [items]);
   const [scope, setScope] = useState<Scope>("all");
   const [tag, setTag] = useState<string | null>(null);

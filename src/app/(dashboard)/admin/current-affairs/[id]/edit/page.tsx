@@ -1,5 +1,6 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CurrentAffairForm } from "@/components/admin/CurrentAffairForm";
+import { getCurrentAffairs } from "@/lib/db/currentAffairs";
 
 export default async function EditCurrentAffairPage({
   params,
@@ -7,6 +8,7 @@ export default async function EditCurrentAffairPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const items = await getCurrentAffairs();
   return (
     <AdminPageShell
       floatCrumbs
@@ -18,7 +20,7 @@ export default async function EditCurrentAffairPage({
         { label: "Edit" },
       ]}
     >
-      <CurrentAffairForm id={id} />
+      <CurrentAffairForm id={id} items={items} />
     </AdminPageShell>
   );
 }

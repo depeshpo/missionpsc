@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useCurrentAffairsAdmin } from "@/lib/hooks/useCurrentAffairs";
 import { makeCurrentAffairId } from "@/data/currentAffairs";
+import {
+  createCurrentAffair,
+  updateCurrentAffair,
+} from "@/app/(dashboard)/admin/current-affairs/actions";
 
 type Scope = "national" | "international";
 type Draft = {
@@ -40,40 +41,22 @@ const blank = (defaultDate: string): Draft => ({
   sourceHref: "",
 });
 
-/** Create (no `id`) or edit (with `id`) a current-affairs item. Persists to the override. */
+/**
+ * Create (no `id`) or edit (with `id`) a current-affairs item, persisted to the
+ * DB via server actions. `items` (the current list, from the server page) powers
+ * unique-id generation.
+ */
 export function CurrentAffairForm({
   id,
+  items,
   defaultDate = "",
 }: {
   id?: string;
+  items: CurrentAffairItem[];
   defaultDate?: string;
 }) {
-  // Gate behind mount so the inner form initialises its draft from the hydrated
-  // override rather than the seed (the useState initialiser runs only once).
-  const mounted = useMounted();
-  if (!mounted) {
-    return (
-      <Card>
-        <CardContent className="space-y-5">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-24" />
-        </CardContent>
-      </Card>
-    );
-  }
-  return <CurrentAffairFormInner id={id} defaultDate={defaultDate} />;
-}
-
-function CurrentAffairFormInner({
-  id,
-  defaultDate,
-}: {
-  id?: string;
-  defaultDate: string;
-}) {
   const router = useRouter();
-  const { list, add, update } = useCurrentAffairsAdmin();
+  const list = items;
   const editing = id != null;
   const existing = editing ? list.find((i) => i.id === id) : undefined;
 
@@ -91,6 +74,8 @@ function CurrentAffairFormInner({
         }
       : blank(defaultDate),
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (editing && !existing) {
     return (
@@ -115,7 +100,7 @@ function CurrentAffairFormInner({
   const canSave =
     draft.title.trim() !== "" && draft.date.trim() !== "" && draft.summary.trim() !== "";
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.title.trim();
     const date = draft.date.trim();
@@ -143,9 +128,18 @@ function CurrentAffairFormInner({
       ...(href ? { source: { title: draft.sourceTitle.trim() || href, href } } : {}),
     };
 
-    if (editing) update(id!, item);
-    else add(item);
+    setSaving(true);
+    setError(null);
+    const res = editing
+      ? await updateCurrentAffair(item)
+      : await createCurrentAffair(item);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
     router.push("/admin/current-affairs");
+    router.refresh();
   }
 
   return (
@@ -241,9 +235,15 @@ function CurrentAffairFormInner({
             </Field>
           </div>
 
+          {error ? (
+            <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+              {error}
+            </p>
+          ) : null}
+
           <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" disabled={!canSave}>
-              {editing ? "Save changes" : "Add item"}
+            <Button type="submit" disabled={!canSave || saving}>
+              {saving ? "Saving…" : editing ? "Save changes" : "Add item"}
             </Button>
             <Link
               href="/admin/current-affairs"

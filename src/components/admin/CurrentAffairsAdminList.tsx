@@ -1,66 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Trash2, RotateCcw, Newspaper } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2, Newspaper } from "lucide-react";
+import type { CurrentAffairItem } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useCurrentAffairsAdmin } from "@/lib/hooks/useCurrentAffairs";
 import { formatDate } from "@/data/currentAffairs";
+import { deleteCurrentAffair } from "@/app/(dashboard)/admin/current-affairs/actions";
 
-/** Admin manage view for the current-affairs collection: edit/delete rows + reset. */
-export function CurrentAffairsAdminList() {
-  const mounted = useMounted();
-  const { list, remove, reset, isOverridden } = useCurrentAffairsAdmin();
-
-  if (!mounted) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-      </div>
-    );
-  }
+/** Admin manage view for the current-affairs collection (from the DB): edit/delete rows. */
+export function CurrentAffairsAdminList({ items }: { items: CurrentAffairItem[] }) {
+  const router = useRouter();
+  const list = items;
 
   if (list.length === 0) {
     return (
-      <div className="space-y-4">
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-        <EmptyState
-          icon={Newspaper}
-          title="No current affairs yet"
-          description="Add your first item to show it on the public Current Affairs feed."
-          action={
-            <Link href="/admin/current-affairs/new" className="text-sm font-medium text-primary">
-              New item
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={Newspaper}
+        title="No current affairs yet"
+        description="Add your first item to show it on the public Current Affairs feed."
+        action={
+          <Link href="/admin/current-affairs/new" className="text-sm font-medium text-primary">
+            New item
+          </Link>
+        }
+      />
     );
   }
 
-  function handleDelete(id: string, title: string) {
-    if (window.confirm(`Delete “${title}”? This removes it from the public feed.`)) {
-      remove(id);
-    }
+  async function handleDelete(id: string, title: string) {
+    if (!window.confirm(`Delete “${title}”? This removes it from the public feed.`)) return;
+    await deleteCurrentAffair(id);
+    router.refresh();
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {list.length} item{list.length === 1 ? "" : "s"}
-          {isOverridden ? (
-            <Badge variant="warning" className="ml-2">Customised</Badge>
-          ) : null}
-        </p>
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {list.length} item{list.length === 1 ? "" : "s"}
+      </p>
 
       <div className="space-y-2">
         {list.map((item) => (
@@ -103,22 +83,5 @@ export function CurrentAffairsAdminList() {
         ))}
       </div>
     </div>
-  );
-}
-
-function ResetButton({ onReset }: { onReset: () => void }) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        if (window.confirm("Reset all current affairs to the defaults? Your changes will be lost.")) {
-          onReset();
-        }
-      }}
-    >
-      <RotateCcw className="h-4 w-4" />
-      Reset to default
-    </Button>
   );
 }

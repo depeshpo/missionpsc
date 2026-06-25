@@ -1,9 +1,11 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CurrentAffairForm } from "@/components/admin/CurrentAffairForm";
+import { getCurrentAffairs } from "@/lib/db/currentAffairs";
 
-export default function NewCurrentAffairPage() {
+export default async function NewCurrentAffairPage() {
   // Default the date to today (server-side is fine — no client purity rule here).
   const today = new Date().toISOString().slice(0, 10);
+  const items = await getCurrentAffairs();
   return (
     <AdminPageShell
       floatCrumbs
@@ -15,7 +17,7 @@ export default function NewCurrentAffairPage() {
         { label: "New" },
       ]}
     >
-      <CurrentAffairForm defaultDate={today} />
+      <CurrentAffairForm items={items} defaultDate={today} />
     </AdminPageShell>
   );
 }
