@@ -1,5 +1,5 @@
 import { PaperEditScreen } from "@/components/admin/PaperEditScreen";
-import { getPaper } from "@/data/syllabus";
+import { getPaper } from "@/lib/db/syllabus";
 
 export default async function EditPaperPage({
   params,
@@ -7,5 +7,5 @@ export default async function EditPaperPage({
   params: Promise<{ paper: string }>;
 }) {
   const { paper: paperId } = await params;
-  return <PaperEditScreen paperId={paperId} seed={getPaper(paperId)} />;
+  return <PaperEditScreen paperId={paperId} seed={await getPaper(paperId)} />;
 }

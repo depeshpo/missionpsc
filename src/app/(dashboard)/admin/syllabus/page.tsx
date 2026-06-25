@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminSyllabusList } from "@/components/admin/AdminSyllabusList";
-import { STAGES, papers } from "@/data/syllabus";
+import { STAGES } from "@/data/syllabus";
+import { getPapers } from "@/lib/db/syllabus";
 
-export default function AdminSyllabusPage() {
+export default async function AdminSyllabusPage() {
+  const papers = await getPapers();
   return (
     <AdminPageShell
       title="Syllabus"

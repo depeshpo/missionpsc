@@ -1,4 +1,4 @@
-import { getPaper } from "@/data/syllabus";
+import { getPaper } from "@/lib/db/syllabus";
 import { PaperSyllabus } from "@/components/syllabus/PaperSyllabus";
 
 export default async function SyllabusPaperPage({
@@ -7,5 +7,5 @@ export default async function SyllabusPaperPage({
   params: Promise<{ paper: string }>;
 }) {
   const { paper: paperId } = await params;
-  return <PaperSyllabus paperId={paperId} seed={getPaper(paperId)} />;
+  return <PaperSyllabus paperId={paperId} seed={await getPaper(paperId)} />;
 }

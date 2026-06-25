@@ -1,8 +1,10 @@
 import { PageShell } from "@/components/layout/PageShell";
-import { STAGES, papers } from "@/data/syllabus";
+import { STAGES } from "@/data/syllabus";
+import { getPapers } from "@/lib/db/syllabus";
 import { SyllabusMap } from "@/components/syllabus/SyllabusMap";
 
-export default function SyllabusPage() {
+export default async function SyllabusPage() {
+  const papers = await getPapers();
   return (
     <PageShell
       title="Syllabus Map"

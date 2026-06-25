@@ -1,5 +1,5 @@
 import { PaperOverviewScreen } from "@/components/admin/PaperOverviewScreen";
-import { getPaper } from "@/data/syllabus";
+import { getPaper } from "@/lib/db/syllabus";
 
 export default async function PaperOverviewPage({
   params,
@@ -7,5 +7,5 @@ export default async function PaperOverviewPage({
   params: Promise<{ paper: string }>;
 }) {
   const { paper: paperId } = await params;
-  return <PaperOverviewScreen paperId={paperId} seed={getPaper(paperId)} />;
+  return <PaperOverviewScreen paperId={paperId} seed={await getPaper(paperId)} />;
 }
