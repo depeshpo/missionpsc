@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { getPaper } from "@/lib/db/syllabus";
 import { UnitView } from "@/components/syllabus/UnitView";
 
@@ -7,5 +8,7 @@ export default async function SyllabusUnitPage({
   params: Promise<{ paper: string; unit: string }>;
 }) {
   const { paper: paperId, unit: unitId } = await params;
-  return <UnitView paperId={paperId} unitId={unitId} seed={await getPaper(paperId)} />;
+  const paper = await getPaper(paperId);
+  if (!paper) notFound();
+  return <UnitView paper={paper} unitId={unitId} />;
 }

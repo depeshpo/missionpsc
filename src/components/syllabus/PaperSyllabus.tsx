@@ -1,65 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, ArrowRight, FileX } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Paper } from "@/lib/types";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { resolvePaper, useSyllabusOverrides } from "@/lib/hooks/useSyllabusPaper";
-import { useMounted } from "@/lib/hooks/useMounted";
 import { UnitCheckbox } from "./UnitCheckbox";
 import { Coverage } from "./Coverage";
 
 /**
- * Client reader for a single paper. Resolves the seed against the admin override
- * map (so edits render), and falls back to an override-only paper when there is
- * no seed — i.e. a paper created in the admin. A missing id shows an empty state.
+ * Reader for a single paper (content from the DB, passed by the server page).
+ * Stays a client component for the per-unit completion checkboxes + coverage
+ * (localStorage progress).
  */
-export function PaperSyllabus({
-  paperId,
-  seed,
-}: {
-  paperId: string;
-  seed?: Paper;
-}) {
-  const overrides = useSyllabusOverrides();
-  const mounted = useMounted();
-  const paper = seed ? resolvePaper(overrides, seed) : overrides[paperId];
-
-  if (!paper) {
-    if (!mounted) {
-      return (
-        <PageShell title="Paper" breadcrumbs={[{ label: "Syllabus", href: "/syllabus" }]}>
-          <Skeleton className="h-40 w-full rounded-xl" />
-        </PageShell>
-      );
-    }
-    return (
-      <PageShell
-        title="Paper not found"
-        breadcrumbs={[{ label: "Syllabus", href: "/syllabus" }]}
-      >
-        <EmptyState
-          icon={FileX}
-          title="This paper isn’t in the syllabus"
-          description="It may have been removed. Head back to see the current papers."
-          action={
-            <Link
-              href="/syllabus"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary"
-            >
-              Back to Syllabus
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          }
-        />
-      </PageShell>
-    );
-  }
-
+export function PaperSyllabus({ paper }: { paper: Paper }) {
   const unitIds = paper.sections.flatMap((s) => s.units.map((u) => u.id));
   const meta = [
     paper.note,

@@ -1,22 +1,12 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { Paper, Stage } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import {
-  resolveAllPapers,
-  useSyllabusOverrides,
-} from "@/lib/hooks/useSyllabusPaper";
 
 type StageMeta = { id: Stage; title: string; subtitle: string };
 
-/**
- * Admin syllabus list. Resolves seed papers against the override map and folds
- * in any created-from-scratch papers, so admin edits and brand-new papers both
- * show up here.
- */
+/** Admin syllabus list. Papers come from the DB via the server page. */
 export function AdminSyllabusList({
   stages,
   papers,
@@ -24,13 +14,10 @@ export function AdminSyllabusList({
   stages: StageMeta[];
   papers: Paper[];
 }) {
-  const overrides = useSyllabusOverrides();
-  const resolved = resolveAllPapers(overrides, papers);
-
   return (
     <div className="space-y-8">
       {stages.map((stage) => {
-        const stagePapers = resolved.filter((p) => p.stage === stage.id);
+        const stagePapers = papers.filter((p) => p.stage === stage.id);
         if (!stagePapers.length) return null;
         return (
           <section key={stage.id} className="space-y-3">

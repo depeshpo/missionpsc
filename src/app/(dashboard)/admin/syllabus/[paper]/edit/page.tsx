@@ -1,4 +1,6 @@
-import { PaperEditScreen } from "@/components/admin/PaperEditScreen";
+import { notFound } from "next/navigation";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { PaperForm } from "@/components/admin/PaperForm";
 import { getPaper } from "@/lib/db/syllabus";
 
 export default async function EditPaperPage({
@@ -7,5 +9,22 @@ export default async function EditPaperPage({
   params: Promise<{ paper: string }>;
 }) {
   const { paper: paperId } = await params;
-  return <PaperEditScreen paperId={paperId} seed={await getPaper(paperId)} />;
+  const paper = await getPaper(paperId);
+  if (!paper) notFound();
+
+  return (
+    <AdminPageShell
+      floatCrumbs
+      title={`Edit ${paper.title}`}
+      description={`Paper ${paper.code} · ${paper.totalMarks} marks`}
+      breadcrumbs={[
+        { label: "Admin", href: "/admin" },
+        { label: "Syllabus", href: "/admin/syllabus" },
+        { label: `Paper ${paper.code}`, href: `/admin/syllabus/${paper.id}` },
+        { label: "Edit" },
+      ]}
+    >
+      <PaperForm initial={paper} />
+    </AdminPageShell>
+  );
 }

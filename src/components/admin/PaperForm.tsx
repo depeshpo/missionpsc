@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Save, Check, X } from "lucide-react";
+import { Plus, Trash2, Save, Check, X, AlertTriangle } from "lucide-react";
 import type { Paper, PaperCode, Section, Stage, Unit } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Field } from "@/components/ui/Field";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useSyllabusPaper, useCreateSyllabusPaper } from "@/lib/hooks/useSyllabusPaper";
-import { useMounted } from "@/lib/hooks/useMounted";
+import { savePaper, type ActionResult } from "@/app/(dashboard)/admin/syllabus/actions";
 
 // --- Author-friendly draft shapes (ids carried so edits preserve identity) ---
 type UnitDraft = { id?: string; number: string; title: string; subtopics: string[] };
@@ -119,48 +117,33 @@ function draftToPaper(draft: PaperDraft, base?: Paper): Paper {
 }
 
 /**
- * Syllabus paper editor. Both modes persist to the syllabus override store:
- * edit updates the paper in place; create writes a new paper (unique id) and
+ * Syllabus paper editor. Persists to the database via server actions: edit
+ * updates the paper in place; create writes a new paper (unique id) and
  * redirects to its overview.
  */
 export function PaperForm({ initial }: { initial?: Paper }) {
-  if (initial) return <EditPaperForm seed={initial} />;
+  if (initial) return <EditPaperForm current={initial} />;
   return <CreatePaperForm />;
 }
 
 /** Create wrapper: persists the new paper, then lands on its overview. */
 function CreatePaperForm() {
-  const create = useCreateSyllabusPaper();
   const router = useRouter();
   return (
     <PaperFormEditor
       mode="create"
-      onSave={(paper) => {
-        create(paper);
-        router.push(`/admin/syllabus/${paper.id}`);
+      onSave={async (paper) => {
+        const res = await savePaper(paper);
+        if ("ok" in res) router.push(`/admin/syllabus/${paper.id}`);
+        return res;
       }}
     />
   );
 }
 
-/**
- * Edit wrapper: loads the current (override-or-seed) paper and gates the inner
- * form behind mount, so its one-time draft initialises from hydrated data.
- */
-function EditPaperForm({ seed }: { seed: Paper }) {
-  const { paper, update } = useSyllabusPaper(seed);
-  const mounted = useMounted();
-
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
-  }
-
-  return <PaperFormEditor mode="edit" current={paper} onSave={update} />;
+/** Edit wrapper: the current paper comes from the DB (server prop); save in place. */
+function EditPaperForm({ current }: { current: Paper }) {
+  return <PaperFormEditor mode="edit" current={current} onSave={savePaper} />;
 }
 
 function PaperFormEditor({
@@ -170,10 +153,12 @@ function PaperFormEditor({
 }: {
   mode: "create" | "edit";
   current?: Paper;
-  onSave: (paper: Paper) => void;
+  onSave: (paper: Paper) => Promise<ActionResult>;
 }) {
   const [draft, setDraft] = useState<PaperDraft>(() => toDraft(current));
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Stable id of the paper being edited (shown only in edit mode; created
   // papers get their unique id assigned on save).
@@ -246,9 +231,16 @@ function PaperFormEditor({
     });
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave(draftToPaper(draft, current));
+    setSaving(true);
+    setError(null);
+    const res = await onSave(draftToPaper(draft, current));
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
     setSaved(true);
   }
 
@@ -491,21 +483,28 @@ function PaperFormEditor({
       </div>
 
       {/* Save status */}
-      {saved ? (
+      {error ? (
+        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : saved ? (
         <div className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-sm">
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-          <span>Saved — changes are stored on this device.</span>
+          <span>Saved to the database.</span>
         </div>
       ) : null}
       <div className="flex items-center gap-3">
-        <Button type="submit">
+        <Button type="submit" disabled={saving}>
           <Save className="h-4 w-4" />
-          {mode === "edit" ? "Save changes" : "Create paper"}
+          {saving
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create paper"}
         </Button>
         <span className="text-xs text-muted-foreground">
-          {mode === "edit"
-            ? "Changes save to this device"
-            : "Creates a paper on this device"}
+          {mode === "edit" ? "Changes save to the database" : "Creates a paper"}
         </span>
       </div>
     </form>

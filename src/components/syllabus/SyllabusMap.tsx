@@ -1,19 +1,15 @@
 "use client";
 
 import type { Paper, Stage } from "@/lib/types";
-import {
-  resolveAllPapers,
-  useSyllabusOverrides,
-} from "@/lib/hooks/useSyllabusPaper";
 import { PaperCard } from "./PaperCard";
 import { Coverage } from "./Coverage";
 
 type StageMeta = { id: Stage; title: string; subtitle: string };
 
 /**
- * Client reader for the syllabus index. Takes all seed papers + stage metadata
- * from the server page and resolves each paper through the admin override map,
- * so edited/reordered papers show up here too.
+ * Reader for the syllabus index. Takes all papers (from the DB, via the server
+ * page) + stage metadata. Stays a client component for the per-stage coverage
+ * bar (localStorage progress).
  */
 export function SyllabusMap({
   stages,
@@ -22,13 +18,10 @@ export function SyllabusMap({
   stages: StageMeta[];
   papers: Paper[];
 }) {
-  const overrides = useSyllabusOverrides();
-  const resolved = resolveAllPapers(overrides, papers);
-
   return (
     <div className="space-y-10">
       {stages.map((stage) => {
-        const stagePapers = resolved.filter((p) => p.stage === stage.id);
+        const stagePapers = papers.filter((p) => p.stage === stage.id);
         const unitIds = stagePapers.flatMap((p) =>
           p.sections.flatMap((s) => s.units.map((u) => u.id)),
         );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,14 +24,12 @@ import {
   restrictToParentElement,
 } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2, RotateCcw, ChevronRight } from "lucide-react";
+import { GripVertical, Pencil, Trash2, ChevronRight } from "lucide-react";
 import type { Paper, Section, Unit } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { useSyllabusPaper } from "@/lib/hooks/useSyllabusPaper";
-import { useMounted } from "@/lib/hooks/useMounted";
+import { savePaper, deletePaper } from "@/app/(dashboard)/admin/syllabus/actions";
 
 type Sensors = ReturnType<typeof useSensors>;
 
@@ -246,19 +244,13 @@ function SectionCard({
  * Manage-the-paper overview. Sections are collapsible (click the title) and
  * always drag-reorderable by their handle; expanding a section reveals its
  * topics as numbered rows that drag-reorder within their unit. Content text is
- * edited on the edit page; all reorders/deletes persist via the override store.
+ * edited on the edit page. Reorders/deletes optimistically update local state
+ * and persist to the database via the `savePaper` server action.
  */
-export function PaperOverview({
-  seed,
-  created = false,
-}: {
-  seed: Paper;
-  /** True when this paper was created in the admin (no seed to reset to). */
-  created?: boolean;
-}) {
+export function PaperOverview({ paper: initial }: { paper: Paper }) {
   const router = useRouter();
-  const { paper, update, reset, isOverridden } = useSyllabusPaper(seed);
-  const mounted = useMounted();
+  const [paper, setPaper] = useState(initial);
+  const [, startTransition] = useTransition();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -266,9 +258,17 @@ export function PaperOverview({
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  const editHref = `/admin/syllabus/${seed.id}/edit`;
+  const editHref = `/admin/syllabus/${paper.id}/edit`;
   const toggleExpand = (id: string) =>
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  // Optimistically apply the new paper, then persist to the DB in the background.
+  function persist(next: Paper) {
+    setPaper(next);
+    startTransition(async () => {
+      await savePaper(next);
+    });
+  }
 
   function onSectionDragEnd(e: DragEndEvent) {
     const { active, over } = e;
@@ -276,7 +276,7 @@ export function PaperOverview({
     const oldI = paper.sections.findIndex((s) => s.id === active.id);
     const newI = paper.sections.findIndex((s) => s.id === over.id);
     if (oldI < 0 || newI < 0) return;
-    update({ ...paper, sections: arrayMove(paper.sections, oldI, newI) });
+    persist({ ...paper, sections: arrayMove(paper.sections, oldI, newI) });
   }
 
   function reorderTopics(
@@ -285,7 +285,7 @@ export function PaperOverview({
     oldIndex: number,
     newIndex: number,
   ) {
-    update({
+    persist({
       ...paper,
       sections: paper.sections.map((s) =>
         s.id !== sectionId
@@ -304,29 +304,16 @@ export function PaperOverview({
 
   function deleteSection(section: Section) {
     if (!window.confirm(`Delete "${section.label}" and its units?`)) return;
-    update({ ...paper, sections: paper.sections.filter((s) => s.id !== section.id) });
+    persist({ ...paper, sections: paper.sections.filter((s) => s.id !== section.id) });
   }
 
-  // For a seed paper, reset just drops the override (falls back to the seed).
-  // For a created paper there is no seed, so reset deletes it — confirm + leave.
-  function handleResetOrDelete() {
-    if (created) {
-      if (!window.confirm(`Delete "${paper.title}"? This can’t be undone.`)) return;
-      reset();
+  function handleDeletePaper() {
+    if (!window.confirm(`Delete "${paper.title}"? This can’t be undone.`)) return;
+    startTransition(async () => {
+      await deletePaper(paper.id);
       router.push("/admin/syllabus");
-      return;
-    }
-    reset();
-  }
-
-  if (!mounted) {
-    return (
-      <div className="space-y-3">
-        {seed.sections.map((s) => (
-          <Skeleton key={s.id} className="h-16 w-full rounded-xl" />
-        ))}
-      </div>
-    );
+      router.refresh();
+    });
   }
 
   return (
@@ -335,17 +322,10 @@ export function PaperOverview({
         <p className="text-xs text-muted-foreground">
           Drag the handles to reorder sections and topics. Click a title to expand.
         </p>
-        {created ? (
-          <Button variant="outline" size="sm" onClick={handleResetOrDelete}>
-            <Trash2 className="h-4 w-4" />
-            Delete paper
-          </Button>
-        ) : isOverridden ? (
-          <Button variant="outline" size="sm" onClick={handleResetOrDelete}>
-            <RotateCcw className="h-4 w-4" />
-            Reset to default
-          </Button>
-        ) : null}
+        <Button variant="outline" size="sm" onClick={handleDeletePaper}>
+          <Trash2 className="h-4 w-4" />
+          Delete paper
+        </Button>
       </div>
 
       <DndContext
