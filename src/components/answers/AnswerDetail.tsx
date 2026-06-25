@@ -1,54 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, PenLine } from "lucide-react";
+import type { Paper, SubjectiveQuestion } from "@/lib/types";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { getPaper } from "@/data/syllabus";
 import { kindLabel } from "@/data/subjective";
-import { useSubjectiveQuestions } from "@/lib/hooks/useSubjectiveQuestions";
 import { AnswerEditor } from "@/components/answers/AnswerEditor";
 import { ModelAnswer } from "@/components/answers/ModelAnswer";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
-/** Public question detail, resolved through the override (admin-added Qs are viewable). */
+/**
+ * Public question detail (question + paper from the DB; the server page 404s a
+ * missing/mismatched id). Client component for the answer editor + bookmark.
+ */
 export function AnswerDetail({
-  paperId,
-  questionId,
+  question,
+  paper,
 }: {
-  paperId: string;
-  questionId: string;
+  question: SubjectiveQuestion;
+  paper: Paper;
 }) {
-  const list = useSubjectiveQuestions();
-  const question = list.find((q) => q.id === questionId);
-  const paper = question ? getPaper(question.paperId) : undefined;
-
-  if (!question || question.paperId !== paperId || !paper) {
-    return (
-      <PageShell
-        title="Question not available"
-        breadcrumbs={[{ label: "Answer Writing", href: "/answers" }]}
-      >
-        <EmptyState
-          icon={PenLine}
-          title="This question is no longer available"
-          description="It may have been removed. Browse the available questions."
-          action={
-            <Link
-              href="/answers"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary"
-            >
-              Back to Answer Writing
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          }
-        />
-      </PageShell>
-    );
-  }
-
   return (
     <PageShell
       title={`Paper ${paper.code} — ${kindLabel(question.kind)}`}

@@ -4,19 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileX } from "lucide-react";
-import type { QuestionKind, SubjectiveQuestion } from "@/lib/types";
+import type { Paper, QuestionKind, SubjectiveQuestion } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useSubjectiveQuestionsAdmin } from "@/lib/hooks/useSubjectiveQuestions";
 import { kindLabel, makeQuestionId } from "@/data/subjective";
-import { papers, getPaper } from "@/data/syllabus";
+import {
+  createQuestion,
+  updateQuestion,
+} from "@/app/(dashboard)/admin/questions/actions";
 
 const KINDS: QuestionKind[] = [
   "qa",
@@ -39,11 +39,11 @@ type Draft = {
   keywords: string;
 };
 
-function blankDraft(): Draft {
+function blankDraft(papers: Paper[]): Draft {
   const firstPaper = papers[0];
   return {
-    paperId: firstPaper.id,
-    sectionId: firstPaper.sections[0]?.id ?? "",
+    paperId: firstPaper?.id ?? "",
+    sectionId: firstPaper?.sections[0]?.id ?? "",
     kind: "qa",
     marks: "10",
     prompt: "",
@@ -54,29 +54,24 @@ function blankDraft(): Draft {
   };
 }
 
-/** Create (no `id`) or edit (with `id`) a subjective question. Persists to the override. */
-export function QuestionForm({ id }: { id?: string }) {
-  // Gate behind mount so the inner form initialises from the hydrated override.
-  const mounted = useMounted();
-  if (!mounted) {
-    return (
-      <Card>
-        <CardContent className="space-y-5">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-24" />
-        </CardContent>
-      </Card>
-    );
-  }
-  return <QuestionFormInner id={id} />;
-}
-
-function QuestionFormInner({ id }: { id?: string }) {
+/**
+ * Create (no `id`) or edit (with `id`) a subjective question, persisted to the DB
+ * via server actions. `papers` (from the DB) powers the paper→section picker;
+ * `list` powers unique-id generation + edit prefill.
+ */
+export function QuestionForm({
+  id,
+  papers,
+  list,
+}: {
+  id?: string;
+  papers: Paper[];
+  list: SubjectiveQuestion[];
+}) {
   const router = useRouter();
-  const { list, add, update } = useSubjectiveQuestionsAdmin();
   const editing = id != null;
   const existing = editing ? list.find((q) => q.id === id) : undefined;
+  const getPaper = (pid: string) => papers.find((p) => p.id === pid);
 
   const [draft, setDraft] = useState<Draft>(() =>
     existing
@@ -91,8 +86,10 @@ function QuestionFormInner({ id }: { id?: string }) {
           modelAnswer: existing.modelAnswer ?? "",
           keywords: existing.keywords.join(", "),
         }
-      : blankDraft(),
+      : blankDraft(papers),
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (editing && !existing) {
     return (
@@ -130,7 +127,7 @@ function QuestionFormInner({ id }: { id?: string }) {
     draft.prompt.trim() !== "" &&
     Number(draft.marks) > 0;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSave) return;
 
@@ -155,9 +152,18 @@ function QuestionFormInner({ id }: { id?: string }) {
       ...(modelAnswer ? { modelAnswer } : {}),
     };
 
-    if (editing) update(id!, question);
-    else add(question);
+    setSaving(true);
+    setError(null);
+    const res = editing
+      ? await updateQuestion(question)
+      : await createQuestion(question);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
     router.push("/admin/questions");
+    router.refresh();
   }
 
   return (
@@ -276,9 +282,15 @@ function QuestionFormInner({ id }: { id?: string }) {
             />
           </Field>
 
+          {error ? (
+            <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+              {error}
+            </p>
+          ) : null}
+
           <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" disabled={!canSave}>
-              {editing ? "Save changes" : "Add question"}
+            <Button type="submit" disabled={!canSave || saving}>
+              {saving ? "Saving…" : editing ? "Save changes" : "Add question"}
             </Button>
             <Link
               href="/admin/questions"

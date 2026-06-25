@@ -2,24 +2,27 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import type { Paper, SubjectiveQuestion } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import {
-  useSubjectiveQuestions,
-  answerablePapersFrom,
-  questionsByPaperFrom,
-} from "@/lib/hooks/useSubjectiveQuestions";
 import { AttemptedCount } from "@/components/answers/AttemptedBadge";
 
-/** Public answers index, resolved through the override (admin edits show here). */
-export function AnswersIndex() {
-  const list = useSubjectiveQuestions();
-  const papers = answerablePapersFrom(list);
-
+/**
+ * Public answers index. `papers` (answerable, in syllabus order) + the full
+ * question `list` come from the DB via the server page. Client component for the
+ * attempted-count badges (localStorage progress).
+ */
+export function AnswersIndex({
+  papers,
+  list,
+}: {
+  papers: Paper[];
+  list: SubjectiveQuestion[];
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {papers.map((paper) => {
-        const questions = questionsByPaperFrom(list, paper.id);
+        const questions = list.filter((q) => q.paperId === paper.id);
         return (
           <Link key={paper.id} href={`/answers/${paper.id}`} className="group block">
             <Card className="h-full transition-colors group-hover:border-primary/40">

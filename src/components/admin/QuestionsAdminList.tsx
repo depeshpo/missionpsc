@@ -1,74 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Trash2, RotateCcw, PenSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2, PenSquare } from "lucide-react";
+import type { Paper, SubjectiveQuestion } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import {
-  useSubjectiveQuestionsAdmin,
-  questionsByPaperFrom,
-} from "@/lib/hooks/useSubjectiveQuestions";
 import { kindLabel } from "@/data/subjective";
-import { papers } from "@/data/syllabus";
+import { deleteQuestion } from "@/app/(dashboard)/admin/questions/actions";
 
-/** Admin manage view for the question bank: edit/delete questions + reset. */
-export function QuestionsAdminList() {
-  const mounted = useMounted();
-  const { list, remove, reset, isOverridden } = useSubjectiveQuestionsAdmin();
-
-  if (!mounted) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-        <Skeleton className="h-24" />
-      </div>
-    );
-  }
+/** Admin manage view for the question bank (from the DB): edit/delete questions. */
+export function QuestionsAdminList({
+  papers,
+  list,
+}: {
+  papers: Paper[];
+  list: SubjectiveQuestion[];
+}) {
+  const router = useRouter();
 
   if (list.length === 0) {
     return (
-      <div className="space-y-4">
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-        <EmptyState
-          icon={PenSquare}
-          title="No questions yet"
-          description="Add your first question to show it on the public Answer Writing pages."
-          action={
-            <Link href="/admin/questions/new" className="text-sm font-medium text-primary">
-              New question
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={PenSquare}
+        title="No questions yet"
+        description="Add your first question to show it on the public Answer Writing pages."
+        action={
+          <Link href="/admin/questions/new" className="text-sm font-medium text-primary">
+            New question
+          </Link>
+        }
+      />
     );
   }
 
   // Group by paper in syllabus order (skip papers with no questions).
   const groups = papers
-    .map((p) => ({ paper: p, items: questionsByPaperFrom(list, p.id) }))
+    .map((p) => ({ paper: p, items: list.filter((q) => q.paperId === p.id) }))
     .filter((g) => g.items.length > 0);
 
-  function handleDelete(promptText: string, id: string) {
-    const label = promptText.length > 60 ? `${promptText.slice(0, 60)}…` : promptText;
-    if (window.confirm(`Delete this question?\n\n“${label}”`)) remove(id);
+  async function handleDelete(q: SubjectiveQuestion) {
+    const label = q.prompt.length > 60 ? `${q.prompt.slice(0, 60)}…` : q.prompt;
+    if (!window.confirm(`Delete this question?\n\n“${label}”`)) return;
+    await deleteQuestion(q.id, q.paperId);
+    router.refresh();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {list.length} question{list.length === 1 ? "" : "s"}
-          {isOverridden ? (
-            <Badge variant="warning" className="ml-2">Customised</Badge>
-          ) : null}
-        </p>
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {list.length} question{list.length === 1 ? "" : "s"}
+      </p>
 
       {groups.map((group) => (
         <section key={group.paper.id} className="space-y-2">
@@ -98,7 +81,7 @@ export function QuestionsAdminList() {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleDelete(q.prompt, q.id)}
+                      onClick={() => handleDelete(q)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-warning"
                       aria-label="Delete question"
                     >
@@ -112,22 +95,5 @@ export function QuestionsAdminList() {
         </section>
       ))}
     </div>
-  );
-}
-
-function ResetButton({ onReset }: { onReset: () => void }) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        if (window.confirm("Reset all questions to the defaults? Your changes will be lost.")) {
-          onReset();
-        }
-      }}
-    >
-      <RotateCcw className="h-4 w-4" />
-      Reset to default
-    </Button>
   );
 }

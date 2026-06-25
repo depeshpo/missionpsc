@@ -1,53 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, PenLine, ArrowRight } from "lucide-react";
+import { ChevronRight, PenLine } from "lucide-react";
+import type { Paper, SubjectiveQuestion } from "@/lib/types";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getPaper } from "@/data/syllabus";
 import { kindLabel } from "@/data/subjective";
-import {
-  useSubjectiveQuestions,
-  questionsByPaperFrom,
-  questionsBySectionFrom,
-} from "@/lib/hooks/useSubjectiveQuestions";
 import { AttemptedDot, AttemptedCount } from "@/components/answers/AttemptedBadge";
 
-/** Public per-paper answer list, resolved through the override. */
-export function AnswersPaper({ paperId }: { paperId: string }) {
-  const list = useSubjectiveQuestions();
-  const paper = getPaper(paperId);
-
-  if (!paper) {
-    return (
-      <PageShell
-        title="Paper not found"
-        breadcrumbs={[{ label: "Answer Writing", href: "/answers" }]}
-      >
-        <EmptyState
-          icon={PenLine}
-          title="This paper is not available"
-          description="Browse the papers with an answer-writing bank."
-          action={
-            <Link
-              href="/answers"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary"
-            >
-              Back to Answer Writing
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          }
-        />
-      </PageShell>
-    );
-  }
-
-  const allIds = questionsByPaperFrom(list, paper.id).map((q) => q.id);
+/**
+ * Public per-paper answer list. `paper` (from the DB; the server page 404s a
+ * missing one) + the full question `list`. Client for the attempted badges.
+ */
+export function AnswersPaper({
+  paper,
+  list,
+}: {
+  paper: Paper;
+  list: SubjectiveQuestion[];
+}) {
+  const allIds = list.filter((q) => q.paperId === paper.id).map((q) => q.id);
   // Only show sections that actually have questions.
   const sections = paper.sections.filter(
-    (s) => questionsBySectionFrom(list, s.id).length > 0,
+    (s) => list.some((q) => q.sectionId === s.id),
   );
 
   return (
@@ -75,7 +52,7 @@ export function AnswersPaper({ paperId }: { paperId: string }) {
                 </div>
               </CardHeader>
               <CardContent className="space-y-1">
-                {questionsBySectionFrom(list, section.id).map((q) => (
+                {list.filter((q) => q.sectionId === section.id).map((q) => (
                   <Link
                     key={q.id}
                     href={`/answers/${paper.id}/${q.id}`}
