@@ -1,48 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Pencil, Trash2, RotateCcw, Library } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ExternalLink, Pencil, Trash2, Library } from "lucide-react";
+import type { Resource } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useResourcesAdmin, resourceCategories } from "@/lib/hooks/useResources";
+import { resourceCategories } from "@/data/resources";
+import { deleteResource } from "@/app/(dashboard)/admin/resources/actions";
 
-/** Admin manage view for the resources collection: edit/delete rows + reset. */
-export function ResourcesAdminList() {
-  const mounted = useMounted();
-  const { list, remove, reset, isOverridden } = useResourcesAdmin();
-
-  if (!mounted) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-      </div>
-    );
-  }
+/** Admin manage view for the resources collection (from the DB): edit/delete rows. */
+export function ResourcesAdminList({ resources }: { resources: Resource[] }) {
+  const router = useRouter();
+  const list = resources;
 
   if (list.length === 0) {
     return (
-      <div className="space-y-4">
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-        <EmptyState
-          icon={Library}
-          title="No resources yet"
-          description="Add your first resource to show it on the public Resources page."
-          action={
-            <Link
-              href="/admin/resources/new"
-              className="text-sm font-medium text-primary"
-            >
-              New resource
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={Library}
+        title="No resources yet"
+        description="Add your first resource to show it on the public Resources page."
+        action={
+          <Link href="/admin/resources/new" className="text-sm font-medium text-primary">
+            New resource
+          </Link>
+        }
+      />
     );
   }
 
@@ -51,23 +34,17 @@ export function ResourcesAdminList() {
     items: list.filter((r) => r.category === category),
   }));
 
-  function handleDelete(id: string, title: string) {
-    if (window.confirm(`Delete “${title}”? This removes it from the public page.`)) {
-      remove(id);
-    }
+  async function handleDelete(id: string, title: string) {
+    if (!window.confirm(`Delete “${title}”? This removes it from the public page.`)) return;
+    await deleteResource(id);
+    router.refresh();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {list.length} resource{list.length === 1 ? "" : "s"}
-          {isOverridden ? (
-            <Badge variant="warning" className="ml-2">Customised</Badge>
-          ) : null}
-        </p>
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {list.length} resource{list.length === 1 ? "" : "s"}
+      </p>
 
       {groups.map((group) => (
         <section key={group.category} className="space-y-2">
@@ -116,22 +93,5 @@ export function ResourcesAdminList() {
         </section>
       ))}
     </div>
-  );
-}
-
-function ResetButton({ onReset }: { onReset: () => void }) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        if (window.confirm("Reset all resources to the defaults? Your changes will be lost.")) {
-          onReset();
-        }
-      }}
-    >
-      <RotateCcw className="h-4 w-4" />
-      Reset to default
-    </Button>
   );
 }

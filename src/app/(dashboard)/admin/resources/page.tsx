@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { ResourcesAdminList } from "@/components/admin/ResourcesAdminList";
+import { getResources } from "@/lib/db/resources";
 
-export default function AdminResourcesPage() {
+export default async function AdminResourcesPage() {
+  const resources = await getResources();
   return (
     <AdminPageShell
       title="Resources"
@@ -22,7 +24,7 @@ export default function AdminResourcesPage() {
         </Link>
       }
     >
-      <ResourcesAdminList />
+      <ResourcesAdminList resources={resources} />
     </AdminPageShell>
   );
 }

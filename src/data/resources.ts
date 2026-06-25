@@ -61,8 +61,13 @@ export const resources: Resource[] = RAW.map((r) => ({
 // --- Accessors (the data boundary — read through these, not the array) ---
 /** Distinct categories in seed (display) order. */
 export function categories(): string[] {
+  return resourceCategories(resources);
+}
+
+/** Distinct categories of any list, in encounter order (display order). */
+export function resourceCategories(list: Resource[]): string[] {
   const out: string[] = [];
-  for (const r of resources) if (!out.includes(r.category)) out.push(r.category);
+  for (const r of list) if (!out.includes(r.category)) out.push(r.category);
   return out;
 }
 

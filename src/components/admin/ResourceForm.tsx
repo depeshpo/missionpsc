@@ -10,38 +10,31 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useResourcesAdmin, resourceCategories } from "@/lib/hooks/useResources";
-import { makeResourceId } from "@/data/resources";
+import { resourceCategories, makeResourceId } from "@/data/resources";
+import {
+  createResource,
+  updateResource,
+} from "@/app/(dashboard)/admin/resources/actions";
 
 type Draft = { title: string; url: string; category: string; description: string };
 
 const blank: Draft = { title: "", url: "", category: "", description: "" };
 
-/** Create (no `id`) or edit (with `id`) a single resource. Persists to the override. */
-export function ResourceForm({ id }: { id?: string }) {
-  // Gate behind mount so the inner form initialises its draft from the hydrated
-  // override rather than the seed (the useState initialiser runs only once).
-  const mounted = useMounted();
-  if (!mounted) {
-    return (
-      <Card>
-        <CardContent className="space-y-5">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-24" />
-        </CardContent>
-      </Card>
-    );
-  }
-  return <ResourceFormInner id={id} />;
-}
-
-function ResourceFormInner({ id }: { id?: string }) {
+/**
+ * Create (no `id`) or edit (with `id`) a single resource, persisted to the DB
+ * via server actions. `resources` (the current list, from the server page)
+ * powers the category datalist and unique-id generation.
+ */
+export function ResourceForm({
+  id,
+  resources,
+}: {
+  id?: string;
+  resources: Resource[];
+}) {
   const router = useRouter();
-  const { list, add, update } = useResourcesAdmin();
+  const list = resources;
   const editing = id != null;
   const existing = editing ? list.find((r) => r.id === id) : undefined;
 
@@ -55,6 +48,8 @@ function ResourceFormInner({ id }: { id?: string }) {
         }
       : blank,
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (editing && !existing) {
     return (
@@ -78,7 +73,7 @@ function ResourceFormInner({ id }: { id?: string }) {
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const canSave = draft.title.trim() !== "" && draft.url.trim() !== "";
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.title.trim();
     const url = draft.url.trim();
@@ -90,9 +85,16 @@ function ResourceFormInner({ id }: { id?: string }) {
       url,
       description: draft.description.trim() || undefined,
     };
-    if (editing) update(id!, resource);
-    else add(resource);
+    setSaving(true);
+    setError(null);
+    const res = editing ? await updateResource(resource) : await createResource(resource);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
     router.push("/admin/resources");
+    router.refresh();
   }
 
   return (
@@ -148,9 +150,15 @@ function ResourceFormInner({ id }: { id?: string }) {
             />
           </Field>
 
+          {error ? (
+            <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+              {error}
+            </p>
+          ) : null}
+
           <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" disabled={!canSave}>
-              {editing ? "Save changes" : "Add resource"}
+            <Button type="submit" disabled={!canSave || saving}>
+              {saving ? "Saving…" : editing ? "Save changes" : "Add resource"}
             </Button>
             <Link
               href="/admin/resources"

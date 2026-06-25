@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { ExternalLink, Search, Library } from "lucide-react";
+import type { Resource } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
-import { useResources, resourceCategories } from "@/lib/hooks/useResources";
+import { resourceCategories } from "@/data/resources";
 
-export function ResourcesList() {
-  const resources = useResources();
+export function ResourcesList({ resources }: { resources: Resource[] }) {
   const categories = useMemo(() => resourceCategories(resources), [resources]);
   const [category, setCategory] = useState<string | null>(null);
   const [query, setQuery] = useState("");

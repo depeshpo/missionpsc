@@ -1,7 +1,9 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { ResourceForm } from "@/components/admin/ResourceForm";
+import { getResources } from "@/lib/db/resources";
 
-export default function NewResourcePage() {
+export default async function NewResourcePage() {
+  const resources = await getResources();
   return (
     <AdminPageShell
       floatCrumbs
@@ -13,7 +15,7 @@ export default function NewResourcePage() {
         { label: "New" },
       ]}
     >
-      <ResourceForm />
+      <ResourceForm resources={resources} />
     </AdminPageShell>
   );
 }
