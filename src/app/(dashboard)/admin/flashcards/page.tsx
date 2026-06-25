@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { FlashcardsAdminList } from "@/components/admin/FlashcardsAdminList";
+import { getFlashcardsData } from "@/lib/db/flashcards";
 
-export default function AdminFlashcardsPage() {
+export default async function AdminFlashcardsPage() {
+  const { decks } = await getFlashcardsData();
   return (
     <AdminPageShell
       title="Flashcards"
@@ -22,7 +24,7 @@ export default function AdminFlashcardsPage() {
         </Link>
       }
     >
-      <FlashcardsAdminList />
+      <FlashcardsAdminList decks={decks} />
     </AdminPageShell>
   );
 }

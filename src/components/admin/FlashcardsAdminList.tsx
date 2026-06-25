@@ -1,65 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Trash2, RotateCcw, Layers } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2, Layers } from "lucide-react";
+import type { Deck } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useFlashcardsAdmin } from "@/lib/hooks/useFlashcards";
+import { deleteDeck } from "@/app/(dashboard)/admin/flashcards/actions";
 
-/** Admin manage view for the flashcards collection: edit/delete decks + reset. */
-export function FlashcardsAdminList() {
-  const mounted = useMounted();
-  const { decks, removeDeck, reset, isOverridden } = useFlashcardsAdmin();
-
-  if (!mounted) {
-    return (
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-      </div>
-    );
-  }
+/** Admin manage view for the flashcards collection (from the DB): edit/delete decks. */
+export function FlashcardsAdminList({ decks }: { decks: Deck[] }) {
+  const router = useRouter();
 
   if (decks.length === 0) {
     return (
-      <div className="space-y-4">
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-        <EmptyState
-          icon={Layers}
-          title="No decks yet"
-          description="Add your first deck to show it on the public Flashcards page."
-          action={
-            <Link href="/admin/flashcards/new" className="text-sm font-medium text-primary">
-              New deck
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={Layers}
+        title="No decks yet"
+        description="Add your first deck to show it on the public Flashcards page."
+        action={
+          <Link href="/admin/flashcards/new" className="text-sm font-medium text-primary">
+            New deck
+          </Link>
+        }
+      />
     );
   }
 
-  function handleDelete(id: string, title: string) {
-    if (window.confirm(`Delete “${title}” and all its cards? This removes it from the public page.`)) {
-      removeDeck(id);
-    }
+  async function handleDelete(id: string, title: string) {
+    if (!window.confirm(`Delete “${title}” and all its cards? This removes it from the public page.`)) return;
+    await deleteDeck(id);
+    router.refresh();
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {decks.length} deck{decks.length === 1 ? "" : "s"}
-          {isOverridden ? (
-            <Badge variant="warning" className="ml-2">Customised</Badge>
-          ) : null}
-        </p>
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {decks.length} deck{decks.length === 1 ? "" : "s"}
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {decks.map((deck) => (
@@ -101,22 +80,5 @@ export function FlashcardsAdminList() {
         ))}
       </div>
     </div>
-  );
-}
-
-function ResetButton({ onReset }: { onReset: () => void }) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        if (window.confirm("Reset all flashcards to the defaults? Your changes will be lost.")) {
-          onReset();
-        }
-      }}
-    >
-      <RotateCcw className="h-4 w-4" />
-      Reset to default
-    </Button>
   );
 }

@@ -10,11 +10,9 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useFlashcardsAdmin } from "@/lib/hooks/useFlashcards";
 import { makeDeckId, makeCardId } from "@/data/flashcards";
+import { saveDeck } from "@/app/(dashboard)/admin/flashcards/actions";
 
 type CardDraft = { id?: string; front: string; back: string; tags: string };
 type Draft = { title: string; description: string; cards: CardDraft[] };
@@ -22,44 +20,42 @@ type Draft = { title: string; description: string; cards: CardDraft[] };
 const blankCard: CardDraft = { front: "", back: "", tags: "" };
 const blank: Draft = { title: "", description: "", cards: [{ ...blankCard }] };
 
-/** Create (no `id`) or edit (with `id`) a deck and its cards. Persists to the override. */
-export function DeckForm({ id }: { id?: string }) {
-  // Gate behind mount so the inner form initialises from the hydrated override.
-  const mounted = useMounted();
-  if (!mounted) {
-    return (
-      <Card>
-        <CardContent className="space-y-5">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-32" />
-        </CardContent>
-      </Card>
-    );
-  }
-  return <DeckFormInner id={id} />;
-}
-
-function DeckFormInner({ id }: { id?: string }) {
+/**
+ * Create (no `id`) or edit (with `id`) a deck and its cards, persisted to the DB
+ * via the `saveDeck` server action (upsert deck + replace its cards). `decks` +
+ * `cards` (from the server page) power id generation and edit prefill.
+ */
+export function DeckForm({
+  id,
+  decks,
+  cards,
+}: {
+  id?: string;
+  decks: Deck[];
+  cards: Flashcard[];
+}) {
   const router = useRouter();
-  const { decks, getDeck, cardsOf, saveDeck } = useFlashcardsAdmin();
   const editing = id != null;
-  const existing = editing ? getDeck(id) : undefined;
+  const existing = editing ? decks.find((d) => d.id === id) : undefined;
 
   const [draft, setDraft] = useState<Draft>(() => {
     if (!existing) return { ...blank, cards: [{ ...blankCard }] };
-    const cards = cardsOf(existing.id).map((c) => ({
-      id: c.id,
-      front: c.front,
-      back: c.back,
-      tags: c.tags.join(", "),
-    }));
+    const deckCards = cards
+      .filter((c) => c.deckId === existing.id)
+      .map((c) => ({
+        id: c.id,
+        front: c.front,
+        back: c.back,
+        tags: c.tags.join(", "),
+      }));
     return {
       title: existing.title,
       description: existing.description ?? "",
-      cards: cards.length ? cards : [{ ...blankCard }],
+      cards: deckCards.length ? deckCards : [{ ...blankCard }],
     };
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (editing && !existing) {
     return (
@@ -92,7 +88,7 @@ function DeckFormInner({ id }: { id?: string }) {
 
   const canSave = draft.title.trim() !== "";
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const title = draft.title.trim();
     if (!title) return;
@@ -123,8 +119,16 @@ function DeckFormInner({ id }: { id?: string }) {
       cardCount: cards.length,
     };
 
-    saveDeck(deck, cards);
+    setSaving(true);
+    setError(null);
+    const res = await saveDeck(deck, cards);
+    setSaving(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
     router.push("/admin/flashcards");
+    router.refresh();
   }
 
   return (
@@ -215,9 +219,15 @@ function DeckFormInner({ id }: { id?: string }) {
         </p>
       </div>
 
+      {error ? (
+        <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+          {error}
+        </p>
+      ) : null}
+
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={!canSave}>
-          {editing ? "Save changes" : "Add deck"}
+        <Button type="submit" disabled={!canSave || saving}>
+          {saving ? "Saving…" : editing ? "Save changes" : "Add deck"}
         </Button>
         <Link
           href="/admin/flashcards"

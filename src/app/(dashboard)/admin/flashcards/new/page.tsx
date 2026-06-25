@@ -1,7 +1,9 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { DeckForm } from "@/components/admin/DeckForm";
+import { getFlashcardsData } from "@/lib/db/flashcards";
 
-export default function NewDeckPage() {
+export default async function NewDeckPage() {
+  const { decks, cards } = await getFlashcardsData();
   return (
     <AdminPageShell
       floatCrumbs
@@ -13,7 +15,7 @@ export default function NewDeckPage() {
         { label: "New" },
       ]}
     >
-      <DeckForm />
+      <DeckForm decks={decks} cards={cards} />
     </AdminPageShell>
   );
 }

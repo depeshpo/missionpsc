@@ -1,5 +1,6 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { DeckForm } from "@/components/admin/DeckForm";
+import { getFlashcardsData } from "@/lib/db/flashcards";
 
 export default async function EditDeckPage({
   params,
@@ -7,6 +8,7 @@ export default async function EditDeckPage({
   params: Promise<{ deck: string }>;
 }) {
   const { deck } = await params;
+  const { decks, cards } = await getFlashcardsData();
   return (
     <AdminPageShell
       floatCrumbs
@@ -18,7 +20,7 @@ export default async function EditDeckPage({
         { label: "Edit" },
       ]}
     >
-      <DeckForm id={deck} />
+      <DeckForm id={deck} decks={decks} cards={cards} />
     </AdminPageShell>
   );
 }

@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
+import type { Deck, Flashcard } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { useFlashcards } from "@/lib/hooks/useFlashcards";
 import { DeckProgress } from "./DeckProgress";
 
-/** Public deck grid, resolved through the admin override (so edits show here). */
-export function DeckGrid() {
-  const { decks, cards } = useFlashcards();
-
+/** Public deck grid (decks + cards from the DB, via the server page). */
+export function DeckGrid({ decks, cards }: { decks: Deck[]; cards: Flashcard[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {decks.map((deck) => {
