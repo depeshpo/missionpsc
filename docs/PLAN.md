@@ -223,9 +223,11 @@ ORM), backend in-repo, deploy target Vercel. Multi-user, but users are admin-onb
   natural home for the deferred in-app invite-user UI.
 - ⏳ **B4 — Deploy** to Vercel.
 
-**Not yet verified:** the notes write path (`saveNote`/`deleteNote`) and the admin-gated half of the
-seed-read fix (create a paper → it appears on the landing page) are typechecked but have not been
-exercised through the UI. Do that first, next session.
+**Verified end-to-end as admin** (2026-07-14): creating a note persists sections/videos/links/files
+with correct `position`, the attachment lands in Storage and serves publicly, removed children are
+really deleted, deleting a note cascades and 404s the reader — and a paper created in admin now shows
+up on the public landing page. Every route builds as `ƒ` (dynamic), since the Supabase server client
+calls `cookies()`, so there is no static-staleness gap.
 
 **The per-feature B1 pattern** (repeat it exactly): `src/lib/db/<feature>.ts` (`import "server-only"`,
 each table `.order("position")`, map snake_case rows → domain types, throw on error) +
