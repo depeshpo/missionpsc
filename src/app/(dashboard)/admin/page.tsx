@@ -12,12 +12,13 @@ import {
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { papers, allUnits } from "@/data/syllabus";
-import { notes } from "@/data/notes";
-import { subjectiveQuestions } from "@/data/subjective";
-import { decks, flashcards } from "@/data/flashcards";
-import { currentAffairs } from "@/data/currentAffairs";
-import { resources } from "@/data/resources";
+import { getPapers } from "@/lib/db/syllabus";
+import { getNotes } from "@/lib/db/notes";
+import { getQuestions } from "@/lib/db/subjective";
+import { getFlashcardsData } from "@/lib/db/flashcards";
+import { getCurrentAffairs } from "@/lib/db/currentAffairs";
+import { getResources } from "@/lib/db/resources";
+import { allUnits, sectionCount } from "@/lib/syllabus";
 
 type ContentType = {
   label: string;
@@ -26,56 +27,64 @@ type ContentType = {
   href?: string;
 };
 
-const sectionCount = papers.reduce((n, p) => n + p.sections.length, 0);
+export default async function AdminPage() {
+  const [papers, notes, questions, { decks, cards }, currentAffairs, resources] =
+    await Promise.all([
+      getPapers(),
+      getNotes(),
+      getQuestions(),
+      getFlashcardsData(),
+      getCurrentAffairs(),
+      getResources(),
+    ]);
 
-const types: ContentType[] = [
-  {
-    label: "Syllabus",
-    icon: BookOpen,
-    count: `${papers.length} papers · ${sectionCount} sections · ${allUnits.length} units`,
-    href: "/admin/syllabus",
-  },
-  {
-    label: "Notes",
-    icon: FileText,
-    count: `${notes.length} notes`,
-    href: "/admin/notes",
-  },
-  {
-    label: "Questions",
-    icon: PenSquare,
-    count: `${subjectiveQuestions.length} questions`,
-    href: "/admin/questions",
-  },
-  {
-    label: "Flashcards",
-    icon: Layers,
-    count: `${decks.length} decks · ${flashcards.length} cards`,
-    href: "/admin/flashcards",
-  },
-  {
-    label: "Current Affairs",
-    icon: Newspaper,
-    count: `${currentAffairs.length} items`,
-    href: "/admin/current-affairs",
-  },
-  {
-    label: "Resources",
-    icon: Library,
-    count: `${resources.length} links`,
-    href: "/admin/resources",
-  },
-];
+  const types: ContentType[] = [
+    {
+      label: "Syllabus",
+      icon: BookOpen,
+      count: `${papers.length} papers · ${sectionCount(papers)} sections · ${allUnits(papers).length} units`,
+      href: "/admin/syllabus",
+    },
+    {
+      label: "Notes",
+      icon: FileText,
+      count: `${notes.length} notes`,
+      href: "/admin/notes",
+    },
+    {
+      label: "Questions",
+      icon: PenSquare,
+      count: `${questions.length} questions`,
+      href: "/admin/questions",
+    },
+    {
+      label: "Flashcards",
+      icon: Layers,
+      count: `${decks.length} decks · ${cards.length} cards`,
+      href: "/admin/flashcards",
+    },
+    {
+      label: "Current Affairs",
+      icon: Newspaper,
+      count: `${currentAffairs.length} items`,
+      href: "/admin/current-affairs",
+    },
+    {
+      label: "Resources",
+      icon: Library,
+      count: `${resources.length} links`,
+      href: "/admin/resources",
+    },
+  ];
 
-export default function AdminPage() {
   return (
     <PageShell
       title="Admin"
       description="Author and manage the study content learners see."
     >
       <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
-        Pick a content type to manage. Editing is a UI preview for now — nothing
-        is saved yet; persistence and a real backend arrive in a later update.
+        Pick a content type to manage. Edits are saved to the database and show on
+        the study pages straight away.
       </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {types.map((t) => {

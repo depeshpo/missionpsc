@@ -3,13 +3,16 @@ import { ArrowRight, Map, BookOpen, LayoutDashboard } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { papersByStage, allUnits } from "@/data/syllabus";
+import { getPapers } from "@/lib/db/syllabus";
+import { papersByStage, allUnits } from "@/lib/syllabus";
 
 // Landing page for the Learn surface. Introduces the portal and surfaces the
-// five subjective Main-stage papers. Reads only through the syllabus accessors.
-export default function LandingPage() {
-  const mainPapers = papersByStage("main");
+// subjective Main-stage papers, read from the DB so admin edits show here.
+export default async function LandingPage() {
+  const papers = await getPapers();
+  const mainPapers = papersByStage(papers, "main");
   const totalMarks = mainPapers.reduce((sum, p) => sum + p.totalMarks, 0);
+  const unitCount = allUnits(papers).length;
 
   return (
     <PageShell
@@ -28,7 +31,7 @@ export default function LandingPage() {
       <div className="flex flex-wrap gap-2">
         <Badge variant="primary">{mainPapers.length} Main papers</Badge>
         <Badge>{totalMarks} marks</Badge>
-        <Badge>{allUnits.length} units</Badge>
+        <Badge>{unitCount} units</Badge>
       </div>
 
       <h2 className="mt-8 mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">

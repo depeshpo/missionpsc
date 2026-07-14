@@ -6,10 +6,6 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
 import { useBookmarks } from "@/lib/hooks/useBookmarks";
-import { allUnits } from "@/data/syllabus";
-import { subjectiveQuestions } from "@/data/subjective";
-import { flashcards } from "@/data/flashcards";
-import { notes } from "@/data/notes";
 import { SYLLABUS_PROGRESS_KEY } from "@/components/syllabus/progress";
 import { ANSWERS_ATTEMPTED_KEY } from "@/components/answers/progress";
 import { FLASHCARDS_KNOWN_KEY } from "@/components/flashcards/progress";
@@ -45,18 +41,35 @@ function Stat({
   );
 }
 
-export function DashboardProgress() {
+/**
+ * Progress widgets. The content ids come from the DB via the page; what the user
+ * has *done* still lives in localStorage (that moves server-side in B2).
+ */
+export function DashboardProgress({
+  unitIds,
+  questionIds,
+  cardIds,
+  noteUnitIds,
+}: {
+  unitIds: string[];
+  questionIds: string[];
+  cardIds: string[];
+  noteUnitIds: string[];
+}) {
   const syllabus = useLocalIdSet(SYLLABUS_PROGRESS_KEY);
   const answers = useLocalIdSet(ANSWERS_ATTEMPTED_KEY);
   const cards = useLocalIdSet(FLASHCARDS_KNOWN_KEY);
   const notesRead = useLocalIdSet(NOTES_READ_KEY);
   const { bookmarks } = useBookmarks();
 
+  const done = (ids: string[], set: { has: (id: string) => boolean }) =>
+    ids.filter((id) => set.has(id)).length;
+
   const stats = [
-    { label: "Syllabus covered", href: "/syllabus", done: allUnits.filter((u) => syllabus.has(u.id)).length, total: allUnits.length },
-    { label: "Answers attempted", href: "/answers", done: subjectiveQuestions.filter((q) => answers.has(q.id)).length, total: subjectiveQuestions.length },
-    { label: "Flashcards known", href: "/flashcards", done: flashcards.filter((c) => cards.has(c.id)).length, total: flashcards.length },
-    { label: "Notes read", href: "/notes", done: notes.filter((n) => notesRead.has(n.unitId)).length, total: notes.length },
+    { label: "Syllabus covered", href: "/syllabus", done: done(unitIds, syllabus), total: unitIds.length },
+    { label: "Answers attempted", href: "/answers", done: done(questionIds, answers), total: questionIds.length },
+    { label: "Flashcards known", href: "/flashcards", done: done(cardIds, cards), total: cardIds.length },
+    { label: "Notes read", href: "/notes", done: done(noteUnitIds, notesRead), total: noteUnitIds.length },
   ];
 
   return (

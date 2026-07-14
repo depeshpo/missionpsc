@@ -3,7 +3,12 @@ import { ArrowRight, BookOpen, Map, PenLine, Layers } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { STAGES, papersByStage, allUnits } from "@/data/syllabus";
+import { STAGES } from "@/data/syllabus";
+import { papersByStage, allUnits } from "@/lib/syllabus";
+import { getPapers } from "@/lib/db/syllabus";
+import { getNotes } from "@/lib/db/notes";
+import { getQuestions } from "@/lib/db/subjective";
+import { getFlashcardsData } from "@/lib/db/flashcards";
 import { DashboardProgress } from "@/components/dashboard/DashboardProgress";
 
 const quickLinks = [
@@ -13,7 +18,15 @@ const quickLinks = [
   { href: "/flashcards", label: "Flashcards", icon: Layers, desc: "Terms, treaties, organizations" },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [papers, notes, questions, { cards }] = await Promise.all([
+    getPapers(),
+    getNotes(),
+    getQuestions(),
+    getFlashcardsData(),
+  ]);
+  const units = allUnits(papers);
+
   return (
     <PageShell
       title="Welcome back"
@@ -21,12 +34,14 @@ export default function DashboardPage() {
     >
       <div className="grid gap-4 sm:grid-cols-2">
         {STAGES.map((stage) => {
-          const papers = papersByStage(stage.id);
-          const marks = papers.reduce((sum, p) => sum + p.totalMarks, 0);
+          const stagePapers = papersByStage(papers, stage.id);
+          const marks = stagePapers.reduce((sum, p) => sum + p.totalMarks, 0);
           return (
             <Card key={stage.id}>
               <CardContent>
-                <Badge variant="primary">{papers.length} paper{papers.length > 1 ? "s" : ""}</Badge>
+                <Badge variant="primary">
+                  {stagePapers.length} paper{stagePapers.length > 1 ? "s" : ""}
+                </Badge>
                 <p className="mt-3 font-semibold">{stage.title}</p>
                 <p className="text-sm text-muted-foreground">{stage.subtitle}</p>
                 <p className="mt-3 text-2xl font-semibold">{marks}<span className="text-sm font-normal text-muted-foreground"> marks</span></p>
@@ -40,7 +55,12 @@ export default function DashboardPage() {
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Your progress
         </h2>
-        <DashboardProgress />
+        <DashboardProgress
+          unitIds={units.map((u) => u.id)}
+          questionIds={questions.map((q) => q.id)}
+          cardIds={cards.map((c) => c.id)}
+          noteUnitIds={notes.map((n) => n.unitId)}
+        />
       </div>
 
       <div className="mt-8">
@@ -71,7 +91,7 @@ export default function DashboardPage() {
       </div>
 
       <p className="mt-8 text-xs text-muted-foreground">
-        Syllabus encoded · {allUnits.length} units across {STAGES.length} stages. Content and interactivity arrive feature by feature.
+        Syllabus encoded · {units.length} units across {STAGES.length} stages. Content and interactivity arrive feature by feature.
       </p>
     </PageShell>
   );
