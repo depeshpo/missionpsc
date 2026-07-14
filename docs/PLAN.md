@@ -210,13 +210,22 @@ ORM), backend in-repo, deploy target Vercel. Multi-user, but users are admin-onb
   idempotent seed script (`npm run seed`) pushes the `src/data/*.ts` seeds into the DB. Auth gates the
   whole dashboard surface + `/admin` via `src/proxy.ts` (**Next 16 renamed `middleware` → `proxy`**);
   `/login` + `UserMenu` + `AuthNav`; the Admin nav is hidden from non-admins.
-- ✅ **B1 — Content read + write, one feature per slice.** Done for **syllabus, resources,
-  current-affairs, flashcards, questions**. **▶ Notes is the last one, in progress** — and since
-  a file blob sitting in the admin's own browser is invisible to every other user, **B3 (file
-  storage) is folded into the notes slice** rather than deferred.
-- ⏳ **B2 — Per-user progress + bookmarks** move server-side (swap `useLocalProgress` / `useBookmarks`).
-  Also the natural home for the deferred in-app invite-user UI.
+- ✅ **B1 — Content read + write, one feature per slice.** Done for **all six**: syllabus, resources,
+  current-affairs, flashcards, questions, notes. Every localStorage content-override hook is deleted.
+- ✅ **B3 — File storage** (folded into the notes slice, since a blob in the admin's own browser is
+  invisible to every other user). Note attachments live in a public `note-files` Storage bucket;
+  `src/lib/noteFiles.ts` uploads, builds public URLs, and deletes.
+- ✅ **Seed reads retired.** The landing page and `/dashboard` were still building their paper lists
+  and unit totals from the TS seed, so admin-created papers never appeared there. They (and the admin
+  hub) now read the DB, via new pure helpers in `src/lib/syllabus.ts`.
+- ⏳ **B2 — Per-user progress + bookmarks** move server-side (swap `useLocalProgress` / `useBookmarks`,
+  and the `notes-read` key). Absorbs `bookmarks/resolve.ts`, the last runtime seed reader. Also the
+  natural home for the deferred in-app invite-user UI.
 - ⏳ **B4 — Deploy** to Vercel.
+
+**Not yet verified:** the notes write path (`saveNote`/`deleteNote`) and the admin-gated half of the
+seed-read fix (create a paper → it appears on the landing page) are typechecked but have not been
+exercised through the UI. Do that first, next session.
 
 **The per-feature B1 pattern** (repeat it exactly): `src/lib/db/<feature>.ts` (`import "server-only"`,
 each table `.order("position")`, map snake_case rows → domain types, throw on error) +
