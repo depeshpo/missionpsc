@@ -2,8 +2,12 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { NotesAdminList } from "@/components/admin/NotesAdminList";
+import { getNotes } from "@/lib/db/notes";
+import { getPapers } from "@/lib/db/syllabus";
 
-export default function AdminNotesPage() {
+export default async function AdminNotesPage() {
+  const [notes, papers] = await Promise.all([getNotes(), getPapers()]);
+
   return (
     <AdminPageShell
       title="Notes"
@@ -22,7 +26,7 @@ export default function AdminNotesPage() {
         </Link>
       }
     >
-      <NotesAdminList />
+      <NotesAdminList notes={notes} papers={papers} />
     </AdminPageShell>
   );
 }

@@ -1,4 +1,6 @@
 import { NoteEditor } from "@/components/admin/NoteEditor";
+import { getNotes } from "@/lib/db/notes";
+import { getPapers } from "@/lib/db/syllabus";
 
 export default async function EditNotePage({
   params,
@@ -6,5 +8,6 @@ export default async function EditNotePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <NoteEditor id={id} />;
+  const [notes, papers] = await Promise.all([getNotes(), getPapers()]);
+  return <NoteEditor id={id} notes={notes} papers={papers} />;
 }

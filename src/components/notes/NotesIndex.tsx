@@ -1,21 +1,19 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { useNotes, papersWithNotesFrom, notesByPaperFrom } from "@/lib/hooks/useNotes";
+import type { Note, Paper } from "@/lib/types";
+import { papersWithNotes, notesByPaper } from "@/lib/notes";
 import { NoteReadProgress } from "@/components/notes/NoteReadProgress";
 
-/** Public notes index, resolved through the override (admin edits show here). */
-export function NotesIndex() {
-  const list = useNotes();
-  const papers = papersWithNotesFrom(list);
+/** Public notes index — one card per paper that has notes. */
+export function NotesIndex({ notes, papers }: { notes: Note[]; papers: Paper[] }) {
+  const withNotes = papersWithNotes(notes, papers);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {papers.map((paper) => {
-        const paperNotes = notesByPaperFrom(list, paper.id);
+      {withNotes.map((paper) => {
+        const paperNotes = notesByPaper(notes, papers, paper.id);
         return (
           <Link key={paper.id} href={`/notes/${paper.id}`} className="group block">
             <Card className="h-full transition-colors group-hover:border-primary/40">

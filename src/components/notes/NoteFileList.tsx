@@ -1,35 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Download, Eye, EyeOff, FileText } from "lucide-react";
 import type { NoteFile } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { getNoteFileBlob } from "@/lib/noteFiles";
+import { noteFileUrl } from "@/lib/noteFiles";
 
 const actionLink =
   "inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
-/** Loads a stored file's blob from IndexedDB into an object URL (revoked on cleanup). */
-function useFileUrl(ref: string): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    let objectUrl: string | null = null;
-    getNoteFileBlob(ref).then((blob) => {
-      if (!active || !blob) return;
-      objectUrl = URL.createObjectURL(blob);
-      setUrl(objectUrl);
-    });
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [ref]);
-  return url;
-}
-
 function FileRow({ file }: { file: NoteFile }) {
-  const url = useFileUrl(file.ref);
+  const url = noteFileUrl(file.ref);
   const [open, setOpen] = useState(false);
   const previewable = file.mime === "application/pdf" || file.mime.startsWith("image/");
 
@@ -42,7 +23,7 @@ function FileRow({ file }: { file: NoteFile }) {
           </span>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{file.name}</span>
           <div className="flex items-center gap-1">
-            {previewable && url ? (
+            {previewable ? (
               <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
@@ -53,20 +34,16 @@ function FileRow({ file }: { file: NoteFile }) {
                 {open ? "Hide" : "Preview"}
               </button>
             ) : null}
-            {url ? (
-              <a href={url} download={file.name} className={actionLink}>
-                <Download className="h-4 w-4" />
-                Download
-              </a>
-            ) : (
-              <span className="px-2 py-1 text-xs text-muted-foreground">loading…</span>
-            )}
+            <a href={url} download={file.name} className={actionLink}>
+              <Download className="h-4 w-4" />
+              Download
+            </a>
           </div>
         </div>
 
-        {previewable && open && url ? (
+        {previewable && open ? (
           file.mime.startsWith("image/") ? (
-            // eslint-disable-next-line @next/next/no-img-element -- blob object URL, not optimizable by next/image
+            // eslint-disable-next-line @next/next/no-img-element -- remote storage URL, not optimizable by next/image
             <img
               src={url}
               alt={file.name}

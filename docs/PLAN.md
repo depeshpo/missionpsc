@@ -199,22 +199,38 @@ then DB) is a later slice. `/admin` stays ungated (auth deferred with the backen
   Created papers show **Delete paper** (confirm + redirect) instead of "Reset to default".
   **All admin authoring is now complete; the next phase is the backend.**
 
-## Backend phase (next) — DB + auth + deploy
-The deferred backend. Swap points: the data accessors + the override hooks (`useSyllabusPaper`,
-`useResources`, `useNotes`, `useCurrentAffairs`, `useFlashcards`, `useSubjectiveQuestions`) +
-`useLocalProgress` + `useBookmarks` + `noteFiles.ts` (IndexedDB). **Supabase is the recommended
-default** (Postgres + Auth + Storage + free tier, clean Vercel fit). Each item is its own
-slice/conversation:
-1. **Provider decision** (Supabase recommended) — set up project + env.
-2. **Schema** mirroring `lib/types.ts`.
-3. **Seed migration** — push current `src/data/*.ts` seeds into the DB once.
-4. **Read path** — public pages fetch from the DB (server components); retire the localStorage
-   content-override layer feature-by-feature (keep `useLocalProgress` for progress until auth).
-5. **Auth** to gate `/admin` (Supabase Auth; admin is currently ungated).
-6. **Admin mutations** write to the DB.
-7. **Per-user progress + bookmarks** move server-side (swap `useLocalProgress`/`useBookmarks`).
-8. **File storage** — `noteFiles.ts` IndexedDB → Supabase Storage.
-9. **Deploy** to Vercel.
+## Backend phase (in progress) — Supabase
+Provider = **Supabase** (Postgres + Auth + Storage), Supabase JS client + raw SQL migrations (no
+ORM), backend in-repo, deploy target Vercel. Multi-user, but users are admin-onboarded (signups off).
+
+- ✅ **B0 — Foundation + auth.** SQL migrations in `supabase/migrations/`: 13 content tables
+  mirroring `lib/types.ts` (string-id PKs, `position` columns, `text[]` for subtopics/keywords/tags)
+  + `profiles(id → auth.users, role)` + a security-definer `is_admin()` + RLS on every content table
+  (public `SELECT`, admin-only writes). Client helpers in `src/lib/supabase/{client,server,admin}.ts`;
+  idempotent seed script (`npm run seed`) pushes the `src/data/*.ts` seeds into the DB. Auth gates the
+  whole dashboard surface + `/admin` via `src/proxy.ts` (**Next 16 renamed `middleware` → `proxy`**);
+  `/login` + `UserMenu` + `AuthNav`; the Admin nav is hidden from non-admins.
+- ✅ **B1 — Content read + write, one feature per slice.** Done for **syllabus, resources,
+  current-affairs, flashcards, questions**. **▶ Notes is the last one, in progress** — and since
+  a file blob sitting in the admin's own browser is invisible to every other user, **B3 (file
+  storage) is folded into the notes slice** rather than deferred.
+- ⏳ **B2 — Per-user progress + bookmarks** move server-side (swap `useLocalProgress` / `useBookmarks`).
+  Also the natural home for the deferred in-app invite-user UI.
+- ⏳ **B4 — Deploy** to Vercel.
+
+**The per-feature B1 pattern** (repeat it exactly): `src/lib/db/<feature>.ts` (`import "server-only"`,
+each table `.order("position")`, map snake_case rows → domain types, throw on error) +
+`src/app/(dashboard)/admin/<feature>/actions.ts` (`"use server"`, **session** client so RLS enforces
+admin, `ActionResult`, `revalidatePath`) + pages become server components that `await` the DB and
+pass props + components become presentational and call the actions + **delete the `useX` override
+hook**. Nested collections upsert parent → upsert children with `position: i` → prune removed
+children (`saveDeck` is the two-level reference, `savePaper` the three-level one). Ordering is an
+implicit array index in TS but an explicit `position` column in Postgres.
+
+**Known debt:** `admin/page.tsx` (hub counts), `DashboardProgress.tsx` (totals) and
+`bookmarks/resolve.ts` still read the `src/data/*` seeds, so their numbers are stale — a separate
+cleanup slice (`resolve.ts` belongs with B2). Note file uploads are eager, so a cancelled edit
+orphans a blob in Storage; no sweep yet.
 
 ## Route map
 ```

@@ -1,70 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Trash2, RotateCcw, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2, FileText } from "lucide-react";
+import type { Note, Paper } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useNotesAdmin, notesByPaperFrom } from "@/lib/hooks/useNotes";
-import { papers, getUnit } from "@/data/syllabus";
+import { findUnit, notesByPaper } from "@/lib/notes";
+import { deleteNote } from "@/app/(dashboard)/admin/notes/actions";
 
-/** Admin manage view for the notes collection: edit/delete notes + reset. */
-export function NotesAdminList() {
-  const mounted = useMounted();
-  const { list, remove, reset, isOverridden } = useNotesAdmin();
+/** Admin manage view for the notes collection (from the DB): edit/delete notes. */
+export function NotesAdminList({ notes, papers }: { notes: Note[]; papers: Paper[] }) {
+  const router = useRouter();
 
-  if (!mounted) {
+  if (notes.length === 0) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-      </div>
-    );
-  }
-
-  if (list.length === 0) {
-    return (
-      <div className="space-y-4">
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-        <EmptyState
-          icon={FileText}
-          title="No notes yet"
-          description="Add your first note to show it on the public Notes pages."
-          action={
-            <Link href="/admin/notes/new" className="text-sm font-medium text-primary">
-              New note
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        icon={FileText}
+        title="No notes yet"
+        description="Add your first note to show it on the public Notes pages."
+        action={
+          <Link href="/admin/notes/new" className="text-sm font-medium text-primary">
+            New note
+          </Link>
+        }
+      />
     );
   }
 
   const groups = papers
-    .map((p) => ({ paper: p, items: notesByPaperFrom(list, p.id) }))
+    .map((p) => ({ paper: p, items: notesByPaper(notes, papers, p.id) }))
     .filter((g) => g.items.length > 0);
 
-  function handleDelete(title: string, id: string) {
-    if (window.confirm(`Delete the note “${title}”? This removes it from the public page.`)) {
-      remove(id);
-    }
+  async function handleDelete(id: string, title: string) {
+    if (!window.confirm(`Delete the note “${title}”? This removes it from the public page.`)) return;
+    await deleteNote(id);
+    router.refresh();
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {list.length} note{list.length === 1 ? "" : "s"}
-          {isOverridden ? (
-            <Badge variant="warning" className="ml-2">Customised</Badge>
-          ) : null}
-        </p>
-        {isOverridden ? <ResetButton onReset={reset} /> : null}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {notes.length} note{notes.length === 1 ? "" : "s"}
+      </p>
 
       {groups.map((group) => (
         <section key={group.paper.id} className="space-y-2">
@@ -73,7 +51,7 @@ export function NotesAdminList() {
           </h2>
           <div className="space-y-2">
             {group.items.map((note) => {
-              const unit = getUnit(note.unitId)?.unit;
+              const unit = findUnit(papers, note.unitId)?.unit;
               return (
                 <Card key={note.id}>
                   <CardContent className="flex items-start justify-between gap-3">
@@ -96,7 +74,7 @@ export function NotesAdminList() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleDelete(note.title, note.id)}
+                        onClick={() => handleDelete(note.id, note.title)}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-warning"
                         aria-label={`Delete ${note.title}`}
                       >
@@ -111,22 +89,5 @@ export function NotesAdminList() {
         </section>
       ))}
     </div>
-  );
-}
-
-function ResetButton({ onReset }: { onReset: () => void }) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
-        if (window.confirm("Reset all notes to the defaults? Your changes will be lost.")) {
-          onReset();
-        }
-      }}
-    >
-      <RotateCcw className="h-4 w-4" />
-      Reset to default
-    </Button>
   );
 }

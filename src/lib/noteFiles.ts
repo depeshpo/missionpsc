@@ -1,61 +1,50 @@
-"use client";
-
 /**
- * Local blob store for note file attachments, backed by IndexedDB (there's no
- * backend in v1). The note JSON keeps only a `ref` (the IndexedDB key); the
- * actual file lives here. Swaps cleanly to real object storage later.
+ * File attachments for notes, stored in the public `note-files` Supabase Storage
+ * bucket. The note row keeps only a `ref` (the object path); the blob lives here.
+ *
+ * The bucket is public-read (like every content table), so reading a file is just
+ * a URL — no fetch, no object URL. Writes are admin-only, enforced by RLS.
  */
-const DB_NAME = "mission-psc";
-const STORE = "note-files";
+import { createClient } from "@/lib/supabase/client";
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
+const BUCKET = "note-files";
 
-function tx<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
-  return openDb().then(
-    (db) =>
-      new Promise<T>((resolve, reject) => {
-        const store = db.transaction(STORE, mode).objectStore(STORE);
-        const req = run(store);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      }),
+/** Keep object paths tame without losing the extension. */
+function safeName(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9.\-_]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "file"
   );
 }
 
-/** Store a file blob; returns the generated ref to save on the note. */
-export async function putNoteFile(blob: Blob): Promise<string> {
-  if (typeof indexedDB === "undefined") throw new Error("IndexedDB unavailable");
-  const ref = crypto.randomUUID();
-  await tx("readwrite", (store) => store.put(blob, ref));
-  return ref;
+/** Upload a file; returns the storage path to save on the note as `ref`. */
+export async function putNoteFile(file: File): Promise<string> {
+  const path = `${crypto.randomUUID()}/${safeName(file.name)}`;
+  const { error } = await createClient()
+    .storage.from(BUCKET)
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (error) throw error;
+  return path;
 }
 
-/** Read a stored file blob, or null if missing / unavailable. */
-export async function getNoteFileBlob(ref: string): Promise<Blob | null> {
-  if (typeof indexedDB === "undefined") return null;
-  try {
-    const blob = await tx<Blob | undefined>("readonly", (store) => store.get(ref));
-    return blob ?? null;
-  } catch {
-    return null;
-  }
+/**
+ * Public URL for a stored file. Built from the env URL rather than through a
+ * Supabase client, so it stays pure and works during a server render too.
+ */
+export function noteFileUrl(ref: string): string {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const path = ref.split("/").map(encodeURIComponent).join("/");
+  return `${base}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
-/** Delete a stored file blob (best effort). */
-export async function deleteNoteFile(ref: string): Promise<void> {
-  if (typeof indexedDB === "undefined") return;
+/** Delete stored files (best effort — an orphaned blob is harmless). */
+export async function deleteNoteFile(...refs: string[]): Promise<void> {
+  if (!refs.length) return;
   try {
-    await tx("readwrite", (store) => store.delete(ref));
+    await createClient().storage.from(BUCKET).remove(refs);
   } catch {
     // ignore
   }

@@ -1,28 +1,14 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { getPaper } from "@/data/syllabus";
-import { useNotes, unitsWithNotesFrom } from "@/lib/hooks/useNotes";
+import type { Note, Paper } from "@/lib/types";
+import { unitsWithNotes } from "@/lib/notes";
 import { NoteReadProgress } from "@/components/notes/NoteReadProgress";
 
-/** Public per-paper notes overview, resolved through the override. */
-export function NotesPaperOverview({ paperId }: { paperId: string }) {
-  const list = useNotes();
-  const paper = getPaper(paperId);
-  const units = paper ? unitsWithNotesFrom(list, paper.id) : [];
-
-  if (!paper) {
-    return (
-      <EmptyState
-        title="Paper not found"
-        description="This paper is not available."
-      />
-    );
-  }
+/** Public per-paper notes overview — the paper's units that have notes. */
+export function NotesPaperOverview({ paper, notes }: { paper: Paper; notes: Note[] }) {
+  const units = unitsWithNotes(notes, paper);
 
   return (
     <div>

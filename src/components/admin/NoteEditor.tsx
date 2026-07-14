@@ -13,19 +13,17 @@ import {
   FileText,
   Link2,
 } from "lucide-react";
-import type { Note, NoteFile, NoteLink, NoteSection, NoteVideo } from "@/lib/types";
+import type { Note, NoteFile, NoteLink, NoteSection, NoteVideo, Paper } from "@/lib/types";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
-import { useMounted } from "@/lib/hooks/useMounted";
-import { useNotesAdmin } from "@/lib/hooks/useNotes";
-import { papers, getPaper, getUnit } from "@/data/syllabus";
+import { findUnit } from "@/lib/notes";
+import { saveNote } from "@/app/(dashboard)/admin/notes/actions";
 import { putNoteFile, deleteNoteFile } from "@/lib/noteFiles";
 import { youtubeId } from "@/lib/youtube";
 import { RichTextEditor } from "./RichTextEditor";
@@ -55,11 +53,11 @@ function newSection(): SectionDraft {
   return { id: crypto.randomUUID(), heading: "", html: "", videos: [], files: [], links: [] };
 }
 
-function freshDraft(): Draft {
+function freshDraft(papers: Paper[]): Draft {
   const paper = papers[0];
-  const section = paper.sections[0];
+  const section = paper?.sections[0];
   return {
-    paperId: paper.id,
+    paperId: paper?.id ?? "",
     sectionId: section?.id ?? "",
     unitId: section?.units[0]?.id ?? "",
     title: "",
@@ -67,44 +65,29 @@ function freshDraft(): Draft {
   };
 }
 
-/** Create (no `id`) or edit (with `id`) a note. Owns the AdminPageShell so the
- *  header/breadcrumb title tracks the live draft title (and condenses on scroll). */
-export function NoteEditor({ id }: { id?: string }) {
-  const mounted = useMounted();
-  if (!mounted) {
-    return (
-      <AdminPageShell
-        floatCrumbs
-        title={id ? "Edit note" : "New note"}
-        breadcrumbs={[
-          { label: "Admin", href: "/admin" },
-          { label: "Notes", href: "/admin/notes" },
-          { label: id ? "Edit" : "New" },
-        ]}
-      >
-        <Card>
-          <CardContent className="space-y-5">
-            <Skeleton className="h-16" />
-            <Skeleton className="h-40" />
-          </CardContent>
-        </Card>
-      </AdminPageShell>
-    );
-  }
-  return <NoteEditorInner id={id} />;
-}
-
-function NoteEditorInner({ id }: { id?: string }) {
+/** Create (no `id`) or edit (with `id`) a note. Notes and papers come from the DB
+ *  via the page. Owns the AdminPageShell so the header/breadcrumb title tracks the
+ *  live draft title (and condenses on scroll). */
+export function NoteEditor({
+  id,
+  notes,
+  papers,
+}: {
+  id?: string;
+  notes: Note[];
+  papers: Paper[];
+}) {
   const router = useRouter();
-  const { getNote, saveNote } = useNotesAdmin();
   const editing = id != null;
-  const existing = editing ? getNote(id) : undefined;
+  const existing = editing ? notes.find((n) => n.id === id) : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<string | null>(null);
 
+  const getPaper = (paperId: string) => papers.find((p) => p.id === paperId);
+
   const [draft, setDraft] = useState<Draft>(() => {
-    if (!existing) return freshDraft();
-    const found = getUnit(existing.unitId);
+    if (!existing) return freshDraft(papers);
+    const found = findUnit(papers, existing.unitId);
     return {
       paperId: found?.paper.id ?? "",
       sectionId: found?.section.id ?? "",
@@ -120,6 +103,12 @@ function NoteEditorInner({ id }: { id?: string }) {
       })),
     };
   });
+
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const title = draft.title.trim();
   const shellTitle = title || (editing ? "Edit note" : "New note");
@@ -172,7 +161,7 @@ function NoteEditorInner({ id }: { id?: string }) {
   const addSection = () => setDraft((d) => ({ ...d, sections: [...d.sections, newSection()] }));
   const removeSection = (sid: string) => {
     const sec = draft.sections.find((s) => s.id === sid);
-    sec?.files.forEach((f) => void deleteNoteFile(f.ref));
+    if (sec) void deleteNoteFile(...sec.files.map((f) => f.ref));
     setDraft((d) => ({ ...d, sections: d.sections.filter((s) => s.id !== sid) }));
   };
 
@@ -192,8 +181,13 @@ function NoteEditorInner({ id }: { id?: string }) {
 
   // --- file ops ---
   const setFiles = (sid: string, files: NoteFile[]) => patchSection(sid, { files });
+  // Uploads go to Supabase Storage, so they can fail (network, RLS, size limit) —
+  // surface that rather than dropping the file silently.
   async function handleFiles(sid: string, fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
+    setUploading((u) => ({ ...u, [sid]: true }));
+    setUploadError(null);
+
     const added: NoteFile[] = [];
     for (const file of Array.from(fileList)) {
       try {
@@ -205,10 +199,18 @@ function NoteEditorInner({ id }: { id?: string }) {
           size: file.size,
           ref,
         });
-      } catch {
-        // ignore a failed upload
+      } catch (err) {
+        setUploadError(
+          `Couldn't upload ${file.name}: ${err instanceof Error ? err.message : "upload failed"}`,
+        );
       }
     }
+
+    setUploading((u) => {
+      const next = { ...u };
+      delete next[sid];
+      return next;
+    });
     if (added.length) {
       setDraft((d) => ({
         ...d,
@@ -227,9 +229,9 @@ function NoteEditorInner({ id }: { id?: string }) {
   const keptSections = draft.sections.filter((s) => htmlText(s.html) !== "");
   const canSave = title !== "" && draft.unitId !== "" && keptSections.length > 0;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSave) return;
+    if (!canSave || saving) return;
     const sections: NoteSection[] = keptSections.map((s) => ({
       id: s.id,
       heading: s.heading.trim(),
@@ -246,11 +248,20 @@ function NoteEditorInner({ id }: { id?: string }) {
       title,
       sections,
     };
-    saveNote(note);
+
+    setSaving(true);
+    setSaveError(null);
+    const res = await saveNote(note);
+    if ("error" in res) {
+      setSaveError(res.error);
+      setSaving(false);
+      return;
+    }
     router.push("/admin/notes");
+    router.refresh();
   }
 
-  const existingUnit = editing ? getUnit(draft.unitId) : undefined;
+  const existingUnit = editing ? findUnit(papers, draft.unitId) : undefined;
 
   return (
     <AdminPageShell floatCrumbs title={shellTitle} breadcrumbs={crumbs}>
@@ -436,6 +447,12 @@ function NoteEditorInner({ id }: { id?: string }) {
                   addLabel="Upload"
                 >
                   <Dropzone onFiles={(files) => handleFiles(section.id, files)} />
+                  {uploading[section.id] ? (
+                    <p className="mt-2 text-xs text-muted-foreground">Uploading…</p>
+                  ) : null}
+                  {uploadError ? (
+                    <p className="mt-2 text-xs text-warning">{uploadError}</p>
+                  ) : null}
                   <SortableList
                     items={section.files}
                     onReorder={(files) => setFiles(section.id, files)}
@@ -506,8 +523,8 @@ function NoteEditorInner({ id }: { id?: string }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={!canSave}>
-            {editing ? "Save changes" : "Add note"}
+          <Button type="submit" disabled={!canSave || saving}>
+            {saving ? "Saving…" : editing ? "Save changes" : "Add note"}
           </Button>
           <Link
             href="/admin/notes"
@@ -515,6 +532,7 @@ function NoteEditorInner({ id }: { id?: string }) {
           >
             Cancel
           </Link>
+          {saveError ? <p className="text-sm text-warning">{saveError}</p> : null}
         </div>
       </form>
     </AdminPageShell>
