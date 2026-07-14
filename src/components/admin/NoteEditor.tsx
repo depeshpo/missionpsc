@@ -20,8 +20,10 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
+import { useMounted } from "@/lib/hooks/useMounted";
 import { findUnit } from "@/lib/notes";
 import { saveNote } from "@/app/(dashboard)/admin/notes/actions";
 import { putNoteFile, deleteNoteFile } from "@/lib/noteFiles";
@@ -67,8 +69,46 @@ function freshDraft(papers: Paper[]): Draft {
 
 /** Create (no `id`) or edit (with `id`) a note. Notes and papers come from the DB
  *  via the page. Owns the AdminPageShell so the header/breadcrumb title tracks the
- *  live draft title (and condenses on scroll). */
+ *  live draft title (and condenses on scroll).
+ *
+ *  The form is mount-gated: the draft mints ids with `crypto.randomUUID()` and
+ *  dnd-kit assigns its own instance ids, neither of which can agree between a
+ *  server render and the client one — rendering it only after mount avoids the
+ *  hydration mismatch. */
 export function NoteEditor({
+  id,
+  notes,
+  papers,
+}: {
+  id?: string;
+  notes: Note[];
+  papers: Paper[];
+}) {
+  const mounted = useMounted();
+  if (!mounted) {
+    return (
+      <AdminPageShell
+        floatCrumbs
+        title={id ? "Edit note" : "New note"}
+        breadcrumbs={[
+          { label: "Admin", href: "/admin" },
+          { label: "Notes", href: "/admin/notes" },
+          { label: id ? "Edit" : "New" },
+        ]}
+      >
+        <Card>
+          <CardContent className="space-y-5">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-40" />
+          </CardContent>
+        </Card>
+      </AdminPageShell>
+    );
+  }
+  return <NoteEditorInner id={id} notes={notes} papers={papers} />;
+}
+
+function NoteEditorInner({
   id,
   notes,
   papers,
