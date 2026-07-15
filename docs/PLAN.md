@@ -218,16 +218,21 @@ ORM), backend in-repo, deploy target Vercel. Multi-user, but users are admin-onb
 - ✅ **Seed reads retired.** The landing page and `/dashboard` were still building their paper lists
   and unit totals from the TS seed, so admin-created papers never appeared there. They (and the admin
   hub) now read the DB, via new pure helpers in `src/lib/syllabus.ts`.
-- ⏳ **B2 — Per-user progress + bookmarks** move server-side (swap `useLocalProgress` / `useBookmarks`,
-  and the `notes-read` key). Absorbs `bookmarks/resolve.ts`, the last runtime seed reader. Also the
-  natural home for the deferred in-app invite-user UI.
-- ⏳ **B4 — Deploy** to Vercel.
+- ✅ **B2 — Per-user progress + bookmarks + answer drafts** in Supabase (`user_progress`,
+  `answer_drafts`, `user_bookmarks`; self-scoped RLS). New client hooks (`useUserProgress`/`useUserIdSet`,
+  `useUserBookmarks`, `useAnswerDraft`) back onto the browser client with a shared cache + optimistic
+  writes. **The whole app is now gated** (`src/proxy.ts` allow-lists only `/` and `/login`). `/bookmarks`
+  resolves server-side, so `bookmarks/resolve.ts` no longer reads the seeds — **no localStorage state
+  remains anywhere**. Deleted `useLocalProgress.ts` + `useBookmarks.ts`.
+- ⏳ **B4 — Deploy** to Vercel. (Still deferred: the in-app invite-user UI.)
 
-**Verified end-to-end as admin** (2026-07-14): creating a note persists sections/videos/links/files
-with correct `position`, the attachment lands in Storage and serves publicly, removed children are
-really deleted, deleting a note cascades and 404s the reader — and a paper created in admin now shows
-up on the public landing page. Every route builds as `ƒ` (dynamic), since the Supabase server client
-calls `cookies()`, so there is no static-staleness gap.
+**Verified end-to-end as admin.** B1/B3 (2026-07-14): creating a note persists sections/videos/links/
+files with correct `position`, the attachment lands in Storage and serves publicly, removed children
+are really deleted, deleting a note cascades and 404s the reader — and a paper created in admin shows
+up on the public landing page. B2 (2026-07-15): gating redirects work; progress/bookmark/answer rows
+land in the DB per-user and persist across reload + fresh tab; `/bookmarks` resolves from the DB; the
+anon key sees zero rows (RLS isolation). Every route builds as `ƒ` (dynamic), since the Supabase
+server client calls `cookies()`, so there is no static-staleness gap.
 
 **The per-feature B1 pattern** (repeat it exactly): `src/lib/db/<feature>.ts` (`import "server-only"`,
 each table `.order("position")`, map snake_case rows → domain types, throw on error) +
