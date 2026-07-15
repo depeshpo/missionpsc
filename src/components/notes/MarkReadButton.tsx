@@ -2,12 +2,12 @@
 
 import { Check, Circle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { NOTES_READ_KEY } from "./progress";
 
 /** Toggle whether a unit's note is marked read. */
 export function MarkReadButton({ unitId }: { unitId: string }) {
-  const { has, toggle } = useLocalIdSet(NOTES_READ_KEY);
+  const { has, toggle } = useUserIdSet(NOTES_READ_KEY);
   const read = has(unitId);
 
   return (

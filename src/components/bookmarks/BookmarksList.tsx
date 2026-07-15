@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bookmark as BookmarkIcon, ExternalLink } from "lucide-react";
+import { Bookmark as BookmarkIcon, BookmarkCheck, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useBookmarks, type BookmarkType } from "@/lib/hooks/useBookmarks";
-import { BookmarkButton } from "./BookmarkButton";
-import { resolveBookmark, TYPE_LABELS, type ResolvedBookmark } from "./resolve";
+import { useUserBookmarks, type BookmarkType } from "@/lib/hooks/useUserBookmarks";
+import { TYPE_LABELS, type ResolvedBookmark } from "./types";
 
 const TYPE_FILTERS: { id: BookmarkType | "all"; label: string }[] = [
   { id: "all", label: "All" },
@@ -30,8 +29,15 @@ function dayKey(ms: number) {
   return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(ms));
 }
 
-export function BookmarksList() {
-  const { bookmarks } = useBookmarks();
+const bkKey = (r: { type: BookmarkType; id: string }) => `${r.type}:${r.id}`;
+
+/**
+ * The /bookmarks list. Items are resolved server-side (from the DB) and passed
+ * in; unsave deletes the row via the shared bookmark store and hides it locally.
+ */
+export function BookmarksList({ items }: { items: ResolvedBookmark[] }) {
+  const { toggle } = useUserBookmarks();
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [type, setType] = useState<BookmarkType | "all">("all");
   const [windowId, setWindowId] = useState("all");
   // Cutoff computed in the (impure-allowed) event handler, not during render.
@@ -43,27 +49,35 @@ export function BookmarksList() {
     setCutoff(days > 0 ? Date.now() - days * 86_400_000 : 0);
   }
 
-  const resolved = useMemo(
+  function unsave(r: ResolvedBookmark) {
+    toggle(r.type, r.id);
+    setRemoved((prev) => new Set(prev).add(bkKey(r)));
+  }
+
+  const filtered = useMemo(
     () =>
-      bookmarks
-        .filter((b) => (type === "all" || b.type === type) && b.savedAt >= cutoff)
-        .map(resolveBookmark)
-        .filter((r): r is ResolvedBookmark => r !== null)
+      items
+        .filter(
+          (b) =>
+            !removed.has(bkKey(b)) &&
+            (type === "all" || b.type === type) &&
+            b.savedAt >= cutoff,
+        )
         .sort((a, b) => b.savedAt - a.savedAt),
-    [bookmarks, type, cutoff],
+    [items, removed, type, cutoff],
   );
 
   // Group by saved date (already newest-first).
   const groups = useMemo(() => {
     const out: { day: string; items: ResolvedBookmark[] }[] = [];
-    for (const r of resolved) {
+    for (const r of filtered) {
       const day = dayKey(r.savedAt);
       const last = out[out.length - 1];
       if (last && last.day === day) last.items.push(r);
       else out.push({ day, items: [r] });
     }
     return out;
-  }, [resolved]);
+  }, [filtered]);
 
   return (
     <div className="space-y-6">
@@ -113,7 +127,7 @@ export function BookmarksList() {
               </h2>
               <div className="space-y-2">
                 {group.items.map((r) => (
-                  <Card key={`${r.type}:${r.id}`}>
+                  <Card key={bkKey(r)}>
                     <CardContent className="flex items-start gap-3 py-3">
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -138,7 +152,14 @@ export function BookmarksList() {
                           </Link>
                         )}
                       </div>
-                      <BookmarkButton type={r.type} id={r.id} />
+                      <button
+                        type="button"
+                        onClick={() => unsave(r)}
+                        aria-label="Remove bookmark"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-primary transition-colors hover:bg-muted"
+                      >
+                        <BookmarkCheck className="h-4 w-4" />
+                      </button>
                     </CardContent>
                   </Card>
                 ))}

@@ -1,5 +1,4 @@
-/** localStorage keys for answer-writing progress (the future-DB swap point). */
-export const ANSWER_TEXT_PREFIX = "answer:";
-export const ANSWERS_ATTEMPTED_KEY = "answers-attempted";
+import type { ProgressKind } from "@/lib/hooks/useUserProgress";
 
-export const answerKey = (questionId: string) => `${ANSWER_TEXT_PREFIX}${questionId}`;
+/** Progress kind for questions with a non-empty answer draft (the DB `user_progress.kind`). */
+export const ANSWERS_ATTEMPTED_KEY: ProgressKind = "answer_attempted";

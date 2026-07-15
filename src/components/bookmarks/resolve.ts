@@ -1,69 +1,105 @@
-import type { Bookmark, BookmarkType } from "@/lib/hooks/useBookmarks";
-import { getCurrentAffair, formatDate } from "@/data/currentAffairs";
-import { getResource } from "@/data/resources";
-import { getNoteByUnit } from "@/data/notes";
-import { getQuestion, kindLabel } from "@/data/subjective";
-import { getFlashcard, getDeck } from "@/data/flashcards";
-import { getUnit, getPaper } from "@/data/syllabus";
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
+import { getPapers } from "@/lib/db/syllabus";
+import { getNotes } from "@/lib/db/notes";
+import { getQuestions } from "@/lib/db/subjective";
+import { getFlashcardsData } from "@/lib/db/flashcards";
+import { getCurrentAffairs } from "@/lib/db/currentAffairs";
+import { getResources } from "@/lib/db/resources";
+import { findUnit } from "@/lib/notes";
+import { formatDate } from "@/data/currentAffairs";
+import { kindLabel } from "@/data/subjective";
+import type { BookmarkType } from "@/lib/hooks/useUserBookmarks";
+import type { ResolvedBookmark } from "./types";
 
-export interface ResolvedBookmark {
-  type: BookmarkType;
-  id: string;
-  savedAt: number;
-  title: string;
-  subtitle?: string;
-  href: string;
-  /** External (resource) links open in a new tab. */
-  external?: boolean;
-}
+type BookmarkRow = { type: BookmarkType; item_id: string; saved_at: string };
 
-export const TYPE_LABELS: Record<BookmarkType, string> = {
-  "current-affair": "Current Affairs",
-  resource: "Resource",
-  note: "Note",
-  question: "Question",
-  flashcard: "Flashcard",
-};
+/**
+ * Read the current user's bookmarks (RLS-scoped) and resolve each to display
+ * data against DB content. A bookmark whose target no longer exists is dropped,
+ * exactly as the old seed-based resolver did. Server-only — the content lives in
+ * the DB now, so resolution can't happen in the client bundle.
+ */
+export async function getResolvedBookmarks(): Promise<ResolvedBookmark[]> {
+  const supabase = await createClient();
+  const { data: rows, error } = await supabase
+    .from("user_bookmarks")
+    .select("type, item_id, saved_at")
+    .order("saved_at", { ascending: false });
+  if (error) throw error;
+  if (!rows || rows.length === 0) return [];
 
-/** Resolve a stored bookmark to display data, or null if the target is gone. */
-export function resolveBookmark(b: Bookmark): ResolvedBookmark | null {
-  const base = { type: b.type, id: b.id, savedAt: b.savedAt };
+  const [papers, notes, questions, flashcards, currentAffairs, resources] = await Promise.all([
+    getPapers(),
+    getNotes(),
+    getQuestions(),
+    getFlashcardsData(),
+    getCurrentAffairs(),
+    getResources(),
+  ]);
 
-  switch (b.type) {
-    case "current-affair": {
-      const item = getCurrentAffair(b.id);
-      if (!item) return null;
-      return { ...base, title: item.title, subtitle: formatDate(item.date), href: `/current-affairs/${item.id}` };
+  const resolved: ResolvedBookmark[] = [];
+  for (const row of rows as BookmarkRow[]) {
+    const base = { type: row.type, id: row.item_id, savedAt: new Date(row.saved_at).getTime() };
+
+    switch (row.type) {
+      case "current-affair": {
+        const item = currentAffairs.find((c) => c.id === row.item_id);
+        if (item)
+          resolved.push({
+            ...base,
+            title: item.title,
+            subtitle: formatDate(item.date),
+            href: `/current-affairs/${item.id}`,
+          });
+        break;
+      }
+      case "resource": {
+        const r = resources.find((x) => x.id === row.item_id);
+        if (r)
+          resolved.push({ ...base, title: r.title, subtitle: r.category, href: r.url, external: true });
+        break;
+      }
+      case "note": {
+        const note = notes.find((n) => n.unitId === row.item_id);
+        const found = findUnit(papers, row.item_id);
+        if (note && found)
+          resolved.push({
+            ...base,
+            title: note.title,
+            subtitle: `Paper ${found.paper.code}`,
+            href: `/notes/${found.paper.id}/${row.item_id}`,
+          });
+        break;
+      }
+      case "question": {
+        const q = questions.find((x) => x.id === row.item_id);
+        if (q) {
+          const paper = papers.find((p) => p.id === q.paperId);
+          resolved.push({
+            ...base,
+            title: q.prompt,
+            subtitle: paper ? `Paper ${paper.code} · ${kindLabel(q.kind)}` : kindLabel(q.kind),
+            href: `/answers/${q.paperId}/${q.id}`,
+          });
+        }
+        break;
+      }
+      case "flashcard": {
+        const card = flashcards.cards.find((c) => c.id === row.item_id);
+        if (card) {
+          const deck = flashcards.decks.find((d) => d.id === card.deckId);
+          resolved.push({
+            ...base,
+            title: card.front,
+            subtitle: deck?.title,
+            href: `/flashcards/${card.deckId}`,
+          });
+        }
+        break;
+      }
     }
-    case "resource": {
-      const r = getResource(b.id);
-      if (!r) return null;
-      return { ...base, title: r.title, subtitle: r.category, href: r.url, external: true };
-    }
-    case "note": {
-      const note = getNoteByUnit(b.id);
-      const found = getUnit(b.id);
-      if (!note || !found) return null;
-      return { ...base, title: note.title, subtitle: `Paper ${found.paper.code}`, href: `/notes/${found.paper.id}/${b.id}` };
-    }
-    case "question": {
-      const q = getQuestion(b.id);
-      if (!q) return null;
-      const paper = getPaper(q.paperId);
-      return {
-        ...base,
-        title: q.prompt,
-        subtitle: paper ? `Paper ${paper.code} · ${kindLabel(q.kind)}` : kindLabel(q.kind),
-        href: `/answers/${q.paperId}/${q.id}`,
-      };
-    }
-    case "flashcard": {
-      const card = getFlashcard(b.id);
-      if (!card) return null;
-      const deck = getDeck(card.deckId);
-      return { ...base, title: card.front, subtitle: deck?.title, href: `/flashcards/${card.deckId}` };
-    }
-    default:
-      return null;
   }
+
+  return resolved;
 }

@@ -3,7 +3,7 @@
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
-import { useBookmarks, type BookmarkType } from "@/lib/hooks/useBookmarks";
+import { useUserBookmarks, type BookmarkType } from "@/lib/hooks/useUserBookmarks";
 
 /**
  * Generic save/unsave toggle for any bookmarkable item. `labeled` → a full
@@ -20,7 +20,7 @@ export function BookmarkButton({
   labeled?: boolean;
   className?: string;
 }) {
-  const { isBookmarked, toggle } = useBookmarks();
+  const { isBookmarked, toggle } = useUserBookmarks();
   const saved = isBookmarked(type, id);
   const Icon = saved ? BookmarkCheck : Bookmark;
 

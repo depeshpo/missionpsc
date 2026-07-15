@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { SYLLABUS_PROGRESS_KEY } from "./progress";
 
 /**
@@ -18,7 +18,7 @@ export function Coverage({
   className?: string;
   showBar?: boolean;
 }) {
-  const { has } = useLocalIdSet(SYLLABUS_PROGRESS_KEY);
+  const { has } = useUserIdSet(SYLLABUS_PROGRESS_KEY);
   const total = unitIds.length;
   const done = unitIds.reduce((n, id) => (has(id) ? n + 1 : n), 0);
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;

@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Next 16 renamed `middleware` → `proxy` (nodejs runtime, no edge). This refreshes
-// the Supabase auth session on every request and gates the dashboard surface:
-// any of these prefixes requires a logged-in user, and /admin additionally
-// requires the admin role.
-const AUTH_PREFIXES = ["/dashboard", "/bookmarks", "/settings", "/admin"];
+// the Supabase auth session on every request and gates the whole app: every route
+// requires a logged-in user except the allow-list below, and /admin additionally
+// requires the admin role. (Per-user progress lives on the learn pages now, so
+// they need a user too — the landing page stays open as the sign-in entry point.)
+const PUBLIC_PATHS = ["/", "/login"];
 const ADMIN_PREFIX = "/admin";
 
 function matchesPrefix(pathname: string, prefix: string) {
@@ -41,7 +42,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const needsAuth = AUTH_PREFIXES.some((p) => matchesPrefix(pathname, p));
+  const needsAuth = !PUBLIC_PATHS.includes(pathname);
 
   if (needsAuth) {
     // Not logged in → send to login, remembering where they were headed.

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { FLASHCARDS_KNOWN_KEY } from "./progress";
 
 /**
@@ -18,7 +18,7 @@ export function DeckProgress({
   className?: string;
   showBar?: boolean;
 }) {
-  const { has } = useLocalIdSet(FLASHCARDS_KNOWN_KEY);
+  const { has } = useUserIdSet(FLASHCARDS_KNOWN_KEY);
   const total = cardIds.length;
   const known = cardIds.reduce((n, id) => (has(id) ? n + 1 : n), 0);
 

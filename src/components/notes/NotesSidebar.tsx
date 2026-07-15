@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { NoteHeading } from "@/data/notes";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { NoteReadProgress } from "./NoteReadProgress";
 import { NOTES_READ_KEY } from "./progress";
 
@@ -33,7 +33,7 @@ export function NotesSidebar({
   items: SidebarItem[];
 }) {
   const pathname = usePathname();
-  const { has } = useLocalIdSet(NOTES_READ_KEY);
+  const { has } = useUserIdSet(NOTES_READ_KEY);
 
   const activeId = items.find((i) => i.href === pathname)?.unitId;
 

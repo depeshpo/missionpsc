@@ -6,7 +6,7 @@ import type { Flashcard } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { FLASHCARDS_KNOWN_KEY } from "./progress";
 import { FlipCard } from "./FlipCard";
 import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
@@ -17,7 +17,7 @@ import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
  * recap with Restart and Reset-deck (scoped to this deck's cards).
  */
 export function ReviewSession({ cards }: { cards: Flashcard[] }) {
-  const { has, toggle } = useLocalIdSet(FLASHCARDS_KNOWN_KEY);
+  const { has, toggle } = useUserIdSet(FLASHCARDS_KNOWN_KEY);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 

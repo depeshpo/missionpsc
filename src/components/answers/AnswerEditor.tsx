@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useLocalProgress, useLocalIdSet } from "@/lib/hooks/useLocalProgress";
-import { answerKey, ANSWERS_ATTEMPTED_KEY } from "./progress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
+import { useAnswerDraft } from "@/lib/hooks/useAnswerDraft";
+import { ANSWERS_ATTEMPTED_KEY } from "./progress";
 
 function wordCount(text: string) {
   const t = text.trim();
@@ -23,14 +24,16 @@ export function AnswerEditor({
   questionId: string;
   wordTarget?: number;
 }) {
-  const [text, setText] = useLocalProgress<string>(answerKey(questionId), "");
-  const { has, toggle } = useLocalIdSet(ANSWERS_ATTEMPTED_KEY);
+  const { text, setText, ready } = useAnswerDraft(questionId);
+  const { has, toggle } = useUserIdSet(ANSWERS_ATTEMPTED_KEY);
 
-  // Mirror "has written something" into the attempted set.
+  // Mirror "has written something" into the attempted set. Wait for the draft to
+  // load so an empty pre-load value doesn't wrongly clear the attempted flag.
   useEffect(() => {
+    if (!ready) return;
     const attempted = text.trim().length > 0;
     if (attempted !== has(questionId)) toggle(questionId);
-  }, [text, questionId, has, toggle]);
+  }, [ready, text, questionId, has, toggle]);
 
   const words = wordCount(text);
   const saved = text.length > 0;
@@ -55,7 +58,7 @@ export function AnswerEditor({
         id="answer"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Draft your answer here — it autosaves to this device."
+        placeholder="Draft your answer here — it autosaves to your account."
         className="min-h-64 w-full resize-y rounded-lg border border-border bg-card p-3 text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       <div className="flex items-center justify-between text-xs text-muted-foreground">

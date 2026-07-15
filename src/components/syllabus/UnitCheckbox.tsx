@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { SYLLABUS_PROGRESS_KEY } from "./progress";
 
 /**
@@ -18,7 +18,7 @@ export function UnitCheckbox({
   label?: string;
   className?: string;
 }) {
-  const { has, toggle } = useLocalIdSet(SYLLABUS_PROGRESS_KEY);
+  const { has, toggle } = useUserIdSet(SYLLABUS_PROGRESS_KEY);
   const done = has(unitId);
 
   return (

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
-import { useBookmarks } from "@/lib/hooks/useBookmarks";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
+import { useUserBookmarks } from "@/lib/hooks/useUserBookmarks";
 import { SYLLABUS_PROGRESS_KEY } from "@/components/syllabus/progress";
 import { ANSWERS_ATTEMPTED_KEY } from "@/components/answers/progress";
 import { FLASHCARDS_KNOWN_KEY } from "@/components/flashcards/progress";
@@ -56,11 +56,11 @@ export function DashboardProgress({
   cardIds: string[];
   noteUnitIds: string[];
 }) {
-  const syllabus = useLocalIdSet(SYLLABUS_PROGRESS_KEY);
-  const answers = useLocalIdSet(ANSWERS_ATTEMPTED_KEY);
-  const cards = useLocalIdSet(FLASHCARDS_KNOWN_KEY);
-  const notesRead = useLocalIdSet(NOTES_READ_KEY);
-  const { bookmarks } = useBookmarks();
+  const syllabus = useUserIdSet(SYLLABUS_PROGRESS_KEY);
+  const answers = useUserIdSet(ANSWERS_ATTEMPTED_KEY);
+  const cards = useUserIdSet(FLASHCARDS_KNOWN_KEY);
+  const notesRead = useUserIdSet(NOTES_READ_KEY);
+  const { bookmarks } = useUserBookmarks();
 
   const done = (ids: string[], set: { has: (id: string) => boolean }) =>
     ids.filter((id) => set.has(id)).length;

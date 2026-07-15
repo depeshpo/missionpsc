@@ -1,2 +1,4 @@
-/** Shared localStorage key for cards marked "known" (the future-DB swap point). */
-export const FLASHCARDS_KNOWN_KEY = "flashcards-known";
+import type { ProgressKind } from "@/lib/hooks/useUserProgress";
+
+/** Progress kind for cards marked "known" (the DB `user_progress.kind`). */
+export const FLASHCARDS_KNOWN_KEY: ProgressKind = "card_known";

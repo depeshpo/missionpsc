@@ -1,12 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { useLocalIdSet } from "@/lib/hooks/useLocalProgress";
+import { useUserIdSet } from "@/lib/hooks/useUserProgress";
 import { ANSWERS_ATTEMPTED_KEY } from "./progress";
 
 /** A small filled/empty dot showing whether one question has been attempted. */
 export function AttemptedDot({ questionId }: { questionId: string }) {
-  const { has } = useLocalIdSet(ANSWERS_ATTEMPTED_KEY);
+  const { has } = useUserIdSet(ANSWERS_ATTEMPTED_KEY);
   const done = has(questionId);
   return (
     <span
@@ -27,7 +27,7 @@ export function AttemptedCount({
   questionIds: string[];
   className?: string;
 }) {
-  const { has } = useLocalIdSet(ANSWERS_ATTEMPTED_KEY);
+  const { has } = useUserIdSet(ANSWERS_ATTEMPTED_KEY);
   const done = questionIds.reduce((n, id) => (has(id) ? n + 1 : n), 0);
   return (
     <span className={cn("text-xs text-muted-foreground tabular-nums", className)}>
