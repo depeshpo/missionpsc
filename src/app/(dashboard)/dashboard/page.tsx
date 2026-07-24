@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Map, PenLine, Layers } from "lucide-react";
+import { ArrowRight, BookOpen, Map, PenLine, Layers, ShieldAlert } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -18,8 +18,13 @@ const quickLinks = [
   { href: "/flashcards", label: "Flashcards", icon: Layers, desc: "Terms, treaties, organizations" },
 ];
 
-export default async function DashboardPage() {
-  const [papers, notes, questions, { cards }] = await Promise.all([
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ denied?: string }>;
+}) {
+  const [{ denied }, papers, notes, questions, { cards }] = await Promise.all([
+    searchParams,
     getPapers(),
     getNotes(),
     getQuestions(),
@@ -32,6 +37,18 @@ export default async function DashboardPage() {
       title="Welcome back"
       description="Nepal Lok Sewa — Section Officer (Foreign Service). Your prep dashboard."
     >
+      {denied === "admin" ? (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <p className="text-sm">
+            <span className="font-medium">Admin access required.</span>{" "}
+            <span className="text-muted-foreground">
+              That area is limited to admin accounts, so we brought you here instead.
+            </span>
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {STAGES.map((stage) => {
           const stagePapers = papersByStage(papers, stage.id);

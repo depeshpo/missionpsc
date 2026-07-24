@@ -62,9 +62,12 @@ export async function proxy(request: NextRequest) {
         .single();
 
       if (profile?.role !== "admin") {
+        // Redirect rather than render a 403: middleware can't use Next's
+        // `forbidden()` (server components only, and still experimental). The
+        // flag tells the dashboard to explain why they were bounced.
         const url = request.nextUrl.clone();
         url.pathname = "/dashboard";
-        url.search = "";
+        url.search = "?denied=admin";
         return NextResponse.redirect(url);
       }
     }

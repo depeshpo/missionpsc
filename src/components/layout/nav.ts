@@ -14,20 +14,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/** A child link under a collapsible nav item. No `href` (or `comingSoon`) = disabled. */
-export interface NavChild {
-  label: string;
-  icon: LucideIcon;
-  href?: string;
-  comingSoon?: boolean;
-}
+/**
+ * Cookie holding the sidebar collapsed flag ("1" = collapsed). Written by the
+ * client Sidebar, read server-side in the dashboard layout.
+ *
+ * It lives here, not in Sidebar.tsx: every export of a `"use client"` module
+ * becomes a client-reference proxy when a server component imports it, so the
+ * server would silently receive a function instead of this string.
+ */
+export const SIDEBAR_COOKIE = "mpsc-sidebar";
 
 export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** When present, the item renders as a collapsible group with these children. */
-  children?: NavChild[];
   /** Only shown to admins (hidden from non-admin users). */
   adminOnly?: boolean;
 }
@@ -35,6 +35,8 @@ export interface NavItem {
 export interface NavGroup {
   heading?: string;
   items: NavItem[];
+  /** Whole group is admin-only (hidden from non-admin users). */
+  adminOnly?: boolean;
 }
 
 // Learn surface — everything you read/study. Rendered in the (learn) top header.
@@ -48,24 +50,23 @@ export const learnNav: NavItem[] = [
 ];
 
 // Dashboard surface — account, progress, management. Rendered in the Sidebar.
+// Admin is a labelled section (like Personal), not a collapsible item, so every
+// editor is one click away.
 export const dashboardNav: NavGroup[] = [
   {
+    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    heading: "Admin",
+    adminOnly: true,
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      {
-        href: "/admin",
-        label: "Admin",
-        icon: ShieldCheck,
-        adminOnly: true,
-        children: [
-          { label: "Syllabus", icon: BookOpen, href: "/admin/syllabus" },
-          { label: "Notes", icon: FileText, href: "/admin/notes" },
-          { label: "Questions", icon: PenSquare, href: "/admin/questions" },
-          { label: "Flashcards", icon: Layers, href: "/admin/flashcards" },
-          { label: "Current Affairs", icon: Newspaper, href: "/admin/current-affairs" },
-          { label: "Resources", icon: Library, href: "/admin/resources" },
-        ],
-      },
+      { href: "/admin", label: "Overview", icon: ShieldCheck },
+      { href: "/admin/syllabus", label: "Syllabus", icon: BookOpen },
+      { href: "/admin/notes", label: "Notes", icon: FileText },
+      { href: "/admin/questions", label: "Questions", icon: PenSquare },
+      { href: "/admin/flashcards", label: "Flashcards", icon: Layers },
+      { href: "/admin/current-affairs", label: "Current Affairs", icon: Newspaper },
+      { href: "/admin/resources", label: "Resources", icon: Library },
     ],
   },
   {

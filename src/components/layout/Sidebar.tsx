@@ -2,152 +2,146 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { GraduationCap, ChevronRight } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { GraduationCap, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Badge } from "@/components/ui/Badge";
-import { dashboardNav } from "./nav";
+import { dashboardNav, SIDEBAR_COOKIE } from "./nav";
 
-function isActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === "/" || pathname === href;
-  return pathname === href || pathname.startsWith(href + "/");
+/**
+ * Longest-prefix match, so a hub link (/admin) doesn't stay highlighted while
+ * you're inside one of its sections (/admin/notes).
+ */
+function useActiveHref(hrefs: string[]) {
+  const pathname = usePathname();
+  let best = "";
+  for (const href of hrefs) {
+    const hit = pathname === href || pathname.startsWith(href + "/");
+    if (hit && href.length > best.length) best = href;
+  }
+  // Treat the app root as the dashboard.
+  if (!best && pathname === "/") best = "/dashboard";
+  return best;
 }
 
 export function Sidebar({
   className,
   isAdmin = false,
+  defaultCollapsed = false,
 }: {
   className?: string;
   isAdmin?: boolean;
+  /** Read from a cookie on the server so the first paint is already correct. */
+  defaultCollapsed?: boolean;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
-  // Explicit expand/collapse choices for collapsible items; absent an entry, a
-  // group is open iff it's the active section (derived default avoids a
-  // set-state-in-effect and still auto-expands on navigation).
-  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
-  const isOpen = (href: string) => overrides[href] ?? isActive(pathname, href);
+  const groups = dashboardNav
+    .filter((group) => !group.adminOnly || isAdmin)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.adminOnly || isAdmin),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const activeHref = useActiveHref(groups.flatMap((g) => g.items.map((i) => i.href)));
+
+  function toggle() {
+    const next = !collapsed;
+    setCollapsed(next);
+    // Persist so a reload (and the server render) keeps the same width.
+    document.cookie = `${SIDEBAR_COOKIE}=${next ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
+  }
 
   return (
     <aside
+      data-collapsed={collapsed ? "" : undefined}
       className={cn(
-        "flex h-full w-64 shrink-0 flex-col border-r border-border bg-card",
+        "flex h-full shrink-0 flex-col border-r border-border bg-card transition-[width] duration-200 ease-out",
+        collapsed ? "w-[4.5rem]" : "w-64",
         className,
       )}
     >
-      <div className="flex items-center gap-2 px-5 py-4">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
+      {/* Brand + collapse control */}
+      <div
+        className={cn(
+          "flex gap-2 py-4",
+          collapsed ? "flex-col items-center px-2" : "items-center px-5",
+        )}
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
           <GraduationCap className="h-5 w-5" />
         </span>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold">Mission PSC</p>
-          <p className="text-xs text-muted-foreground">Section Officer · MoFA</p>
-        </div>
+        {!collapsed ? (
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-sm font-semibold">Mission PSC</p>
+            <p className="truncate text-xs text-muted-foreground">Section Officer · MoFA</p>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
-        {dashboardNav.map((group, gi) => {
-          // Hide admin-only items from non-admins; drop a group left empty.
-          const items = group.items.filter((item) => !item.adminOnly || isAdmin);
-          if (!items.length) return null;
-          return (
-          <div key={gi}>
+      <nav className={cn("flex-1 space-y-5 overflow-y-auto py-2", collapsed ? "px-2" : "px-3")}>
+        {groups.map((group, gi) => (
+          <div key={group.heading ?? gi}>
             {group.heading ? (
-              <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {group.heading}
-              </p>
+              collapsed ? (
+                // Keep the grouping legible without the label.
+                <div className="mx-auto mb-2 h-px w-6 bg-border" aria-hidden />
+              ) : (
+                <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {group.heading}
+                </p>
+              )
             ) : null}
+
             <ul className="space-y-0.5">
-              {items.map((item) => {
-                const active = isActive(pathname, item.href);
+              {group.items.map((item) => {
+                const active = activeHref === item.href;
                 const Icon = item.icon;
-                const open = item.children ? isOpen(item.href) : false;
-                const rowClass = cn(
-                  "flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                );
                 return (
                   <li key={item.href}>
-                    {item.children ? (
-                      // Whole row toggles the group; opening also navigates to the hub.
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !open;
-                          setOverrides((prev) => ({ ...prev, [item.href]: next }));
-                          if (next) router.push(item.href);
-                        }}
-                        aria-expanded={open}
-                        className={rowClass}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="flex-1 text-left">{item.label}</span>
-                        <ChevronRight
-                          className={cn(
-                            "h-4 w-4 shrink-0 transition-transform",
-                            open && "rotate-90",
-                          )}
-                        />
-                      </button>
-                    ) : (
-                      <Link href={item.href} className={rowClass}>
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {item.label}
-                      </Link>
-                    )}
-
-                    {item.children && open ? (
-                      <ul className="ml-5 mt-0.5 space-y-0.5 border-l border-border pl-2">
-                        {item.children.map((child) => {
-                          const ChildIcon = child.icon;
-                          return child.href && !child.comingSoon ? (
-                            <li key={child.label}>
-                              <Link
-                                href={child.href}
-                                aria-current={
-                                  isActive(pathname, child.href) ? "page" : undefined
-                                }
-                                className={cn(
-                                  "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
-                                  isActive(pathname, child.href)
-                                    ? "bg-accent font-medium text-accent-foreground"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                                )}
-                              >
-                                <ChildIcon className="h-4 w-4 shrink-0" />
-                                {child.label}
-                              </Link>
-                            </li>
-                          ) : (
-                            <li
-                              key={child.label}
-                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground/60"
-                            >
-                              <ChildIcon className="h-4 w-4 shrink-0" />
-                              <span className="flex-1">{child.label}</span>
-                              <Badge variant="outline" className="text-[10px]">
-                                soon
-                              </Badge>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : null}
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      title={collapsed ? item.label : undefined}
+                      className={cn(
+                        "flex min-w-0 items-center rounded-lg text-sm font-medium transition-colors",
+                        collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2",
+                        active
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {!collapsed ? <span className="truncate">{item.label}</span> : null}
+                      {collapsed ? <span className="sr-only">{item.label}</span> : null}
+                    </Link>
                   </li>
                 );
               })}
             </ul>
           </div>
-          );
-        })}
+        ))}
       </nav>
 
-      <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-        v1 · UI preview
-      </div>
+      {!collapsed ? (
+        <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+          Lok Sewa · Foreign Service
+        </div>
+      ) : null}
     </aside>
   );
 }

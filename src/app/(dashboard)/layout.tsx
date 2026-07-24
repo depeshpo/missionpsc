@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { SIDEBAR_COOKIE } from "@/components/layout/nav";
 import { Topbar } from "@/components/layout/Topbar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,10 +23,13 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
   const isAdmin = profile?.role === "admin";
+  // Sidebar width is a UI preference kept in a cookie, so the server renders it
+  // already collapsed/expanded — no flash, no hydration mismatch.
+  const collapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar className="hidden md:flex" isAdmin={isAdmin} />
+      <Sidebar className="hidden md:flex" isAdmin={isAdmin} defaultCollapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
         <main className="flex-1 overflow-y-auto">{children}</main>
