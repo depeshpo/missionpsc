@@ -87,7 +87,12 @@ export function registerUserReset(cb: () => void) {
   return () => externalResets.delete(cb);
 }
 
-function resetAll() {
+/**
+ * Drop every cached per-user store and notify subscribers. Used when the auth
+ * user changes, and by Settings after wiping progress — without it the shared
+ * caches would keep showing ticks for rows that no longer exist.
+ */
+export function clearUserStateCaches() {
   for (const e of cache.values()) {
     e.set = new Set();
     e.ids = EMPTY;
@@ -110,7 +115,7 @@ function wireAuth() {
     const uid = session?.user?.id ?? null;
     if (uid !== lastUserId) {
       lastUserId = uid;
-      resetAll();
+      clearUserStateCaches();
     }
   });
 }

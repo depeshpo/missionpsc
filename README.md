@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mission PSC
 
-## Getting Started
+A self-built study portal for the **Nepal Lok Sewa Aayog — Section Officer (Shakha Adhikrit,
+Gazetted Class III), Foreign Service (परराष्ट्र सेवा)** exam. It covers the **subjective** side only:
+Stage II (Main) papers and the Interview.
 
-First, run the development server:
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Supabase (Postgres + Auth + Storage).
+
+- Architecture, conventions and the exam data model: [`AGENTS.md`](AGENTS.md)
+- Build history and roadmap: [`docs/PLAN.md`](docs/PLAN.md)
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+./start.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+That installs dependencies if needed, checks your environment, verifies Supabase is reachable, and
+starts the dev server on <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To run the checks without starting the server:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+./start.sh --check
+```
 
-## Learn More
+## First-time setup
 
-To learn more about Next.js, take a look at the following resources:
+1. **Node.js 20+** (developed on 24).
+2. **Environment** — copy the template and fill in your Supabase project values
+   (Supabase dashboard → Project Settings → API):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   cp .env.example .env.local
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   | Variable | Purpose |
+   | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (public) |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key (public; RLS enforces access) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | **Server only.** Used by the seed script. Never commit or expose it. |
 
-## Deploy on Vercel
+   `.env.local` is gitignored. The running app needs only the two `NEXT_PUBLIC_*` values — nothing in
+   `src/` reads the service-role key.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Database** — apply the migrations in `supabase/migrations/` to your project, then load the
+   starter content:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npx supabase db push
+   npm run seed
+   ```
+
+## Signing in
+
+**The app is login-gated.** Only `/` (landing) and `/login` are public; everything else redirects to
+the login page. **Public signup is disabled by design** — accounts are created by the admin.
+
+To create a user: Supabase dashboard → Authentication → Users → *Add user*. A `profiles` row is
+created automatically with `role = 'user'`. To make someone an admin (required for `/admin`):
+
+```sql
+update profiles set role = 'admin' where id = '<the-user-uuid>';
+```
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `./start.sh` | Checks + dev server (the normal way to run it) |
+| `./start.sh --check` | Diagnostics only |
+| `npm run dev` | Dev server, no checks |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run seed` | Push `src/data/*.ts` starter content into Supabase (idempotent) |
+
+## Gotchas
+
+- **A paused Supabase project is the most common "nothing works".** Free-tier projects pause after
+  about a week of inactivity, and since every page reads from the database, the whole app fails.
+  `./start.sh` detects this and tells you to hit **Restore** in the Supabase dashboard. Pausing does
+  not delete data.
+- **Content lives in the database, not in the code.** `src/data/*.ts` is only the one-time seed for
+  `npm run seed`; the app reads through `src/lib/db/*`. Author real material through `/admin`.
+- Next 16 renamed `middleware` → **`proxy`**; auth gating lives in `src/proxy.ts`.
