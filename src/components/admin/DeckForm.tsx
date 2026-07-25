@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { makeDeckId, makeCardId } from "@/data/flashcards";
+import { toast } from "@/lib/toast";
 import { saveDeck } from "@/app/(dashboard)/admin/flashcards/actions";
 
 type CardDraft = { id?: string; front: string; back: string; tags: string };
@@ -125,8 +126,10 @@ export function DeckForm({
     setSaving(false);
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       return;
     }
+    toast.success(editing ? "Deck saved" : "Deck added");
     router.push("/admin/flashcards");
     router.refresh();
   }

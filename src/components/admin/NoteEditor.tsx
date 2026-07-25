@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
 import { useMounted } from "@/lib/hooks/useMounted";
 import { findUnit } from "@/lib/notes";
+import { toast } from "@/lib/toast";
 import { saveNote } from "@/app/(dashboard)/admin/notes/actions";
 import { putNoteFile, deleteNoteFile } from "@/lib/noteFiles";
 import { youtubeId } from "@/lib/youtube";
@@ -294,9 +295,11 @@ function NoteEditorInner({
     const res = await saveNote(note);
     if ("error" in res) {
       setSaveError(res.error);
+      toast.error(res.error);
       setSaving(false);
       return;
     }
+    toast.success(editing ? "Note saved" : "Note added");
     router.push("/admin/notes");
     router.refresh();
   }

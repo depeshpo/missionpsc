@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { findUnit, notesByPaper } from "@/lib/notes";
 import { deleteNote } from "@/app/(dashboard)/admin/notes/actions";
+import { toast } from "@/lib/toast";
 
 /** Admin manage view for the notes collection (from the DB): edit/delete notes. */
 export function NotesAdminList({ notes, papers }: { notes: Note[]; papers: Paper[] }) {
@@ -34,7 +35,12 @@ export function NotesAdminList({ notes, papers }: { notes: Note[]; papers: Paper
 
   async function handleDelete(id: string, title: string) {
     if (!window.confirm(`Delete the note “${title}”? This removes it from the public page.`)) return;
-    await deleteNote(id);
+    const res = await deleteNote(id);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Note deleted");
     router.refresh();
   }
 

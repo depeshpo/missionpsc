@@ -34,7 +34,7 @@ export function PageShell({
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
       </div>
-      <div className="mt-6">{children}</div>
+      <div className="animate-page-in mt-6">{children}</div>
     </div>
   );
 }

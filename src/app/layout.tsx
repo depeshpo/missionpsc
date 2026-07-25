@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import Script from "next/script";
 import "./globals.css";
+import { Toaster } from "@/lib/toast";
+import { TopProgress } from "@/components/layout/TopProgress";
+import { WelcomeToast } from "@/components/auth/WelcomeToast";
 
 // Applies the saved/preferred theme before paint to avoid a flash of the wrong
 // theme. Injected via next/script (beforeInteractive) so it is hydration-safe.
@@ -38,9 +42,14 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive">
           {themeInit}
         </Script>
+        <TopProgress />
         {/* Surface chrome (Learn header vs Dashboard sidebar) lives in each
             route group's own layout: src/app/(learn) and src/app/(dashboard). */}
         {children}
+        <Toaster />
+        <Suspense fallback={null}>
+          <WelcomeToast />
+        </Suspense>
       </body>
     </html>
   );

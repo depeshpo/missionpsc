@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Field } from "@/components/ui/Field";
 import { savePaper, type ActionResult } from "@/app/(dashboard)/admin/syllabus/actions";
+import { toast } from "@/lib/toast";
 
 // --- Author-friendly draft shapes (ids carried so edits preserve identity) ---
 type UnitDraft = { id?: string; number: string; title: string; subtopics: string[] };
@@ -239,8 +240,10 @@ function PaperFormEditor({
     setSaving(false);
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       return;
     }
+    toast.success(mode === "create" ? "Paper created" : "Paper saved");
     setSaved(true);
   }
 

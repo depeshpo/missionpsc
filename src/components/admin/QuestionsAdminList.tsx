@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { kindLabel } from "@/data/subjective";
 import { deleteQuestion } from "@/app/(dashboard)/admin/questions/actions";
+import { toast } from "@/lib/toast";
 
 /** Admin manage view for the question bank (from the DB): edit/delete questions. */
 export function QuestionsAdminList({
@@ -43,7 +44,12 @@ export function QuestionsAdminList({
   async function handleDelete(q: SubjectiveQuestion) {
     const label = q.prompt.length > 60 ? `${q.prompt.slice(0, 60)}…` : q.prompt;
     if (!window.confirm(`Delete this question?\n\n“${label}”`)) return;
-    await deleteQuestion(q.id, q.paperId);
+    const res = await deleteQuestion(q.id, q.paperId);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Question deleted");
     router.refresh();
   }
 

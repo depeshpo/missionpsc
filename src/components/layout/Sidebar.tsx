@@ -118,16 +118,27 @@ export function Sidebar({
                       aria-current={active ? "page" : undefined}
                       title={collapsed ? item.label : undefined}
                       className={cn(
-                        "flex min-w-0 items-center rounded-lg text-sm font-medium transition-colors",
-                        collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2",
+                        "flex items-center rounded-lg text-sm font-medium",
+                        // Collapsed: a centered 40x40 square, so the icons form a
+                        // tidy column aligned with the brand mark; hover/active
+                        // mirror an expanded link click, plus a press.
+                        collapsed
+                          ? "mx-auto h-10 w-10 justify-center transition-[background-color,color,transform] active:scale-95"
+                          : "min-w-0 gap-3 px-3 py-2 transition-colors",
                         active
-                          ? "bg-accent text-accent-foreground"
+                          ? cn(
+                              "bg-accent text-accent-foreground",
+                              collapsed && "ring-1 ring-inset ring-primary/25",
+                            )
                           : "text-muted-foreground hover:bg-muted hover:text-foreground",
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
-                      {!collapsed ? <span className="truncate">{item.label}</span> : null}
-                      {collapsed ? <span className="sr-only">{item.label}</span> : null}
+                      {collapsed ? (
+                        <span className="sr-only">{item.label}</span>
+                      ) : (
+                        <span className="truncate">{item.label}</span>
+                      )}
                     </Link>
                   </li>
                 );

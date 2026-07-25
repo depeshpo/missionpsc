@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { resourceCategories } from "@/data/resources";
 import { deleteResource } from "@/app/(dashboard)/admin/resources/actions";
+import { toast } from "@/lib/toast";
 
 /** Admin manage view for the resources collection (from the DB): edit/delete rows. */
 export function ResourcesAdminList({ resources }: { resources: Resource[] }) {
@@ -36,7 +37,12 @@ export function ResourcesAdminList({ resources }: { resources: Resource[] }) {
 
   async function handleDelete(id: string, title: string) {
     if (!window.confirm(`Delete “${title}”? This removes it from the public page.`)) return;
-    await deleteResource(id);
+    const res = await deleteResource(id);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Resource deleted");
     router.refresh();
   }
 

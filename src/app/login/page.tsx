@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
-import { login } from "./actions";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Field";
+import { LoginForm } from "./LoginForm";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirect?: string }>;
+  searchParams: Promise<{ redirect?: string }>;
 }) {
-  const { error, redirect: next } = await searchParams;
+  const { redirect: next } = await searchParams;
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4">
@@ -25,34 +22,8 @@ export default async function LoginPage({
         </div>
 
         <Card>
-          <CardContent className="space-y-4">
-            {error ? (
-              <div
-                role="alert"
-                className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
-              >
-                {error}
-              </div>
-            ) : null}
-
-            <form action={login} className="space-y-4">
-              <input type="hidden" name="redirect" value={next ?? "/admin"} />
-              <Field label="Email" htmlFor="email" required>
-                <Input id="email" name="email" type="email" autoComplete="email" required />
-              </Field>
-              <Field label="Password" htmlFor="password" required>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                />
-              </Field>
-              <Button type="submit" className="w-full">
-                Sign in
-              </Button>
-            </form>
+          <CardContent>
+            <LoginForm redirectTo={next ?? "/admin"} />
           </CardContent>
         </Card>
 

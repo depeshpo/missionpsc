@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { kindLabel, makeQuestionId } from "@/data/subjective";
+import { toast } from "@/lib/toast";
 import {
   createQuestion,
   updateQuestion,
@@ -160,8 +161,10 @@ export function QuestionForm({
     setSaving(false);
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       return;
     }
+    toast.success(editing ? "Question saved" : "Question added");
     router.push("/admin/questions");
     router.refresh();
   }

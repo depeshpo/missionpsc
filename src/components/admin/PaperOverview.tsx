@@ -30,6 +30,7 @@ import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { savePaper, deletePaper } from "@/app/(dashboard)/admin/syllabus/actions";
+import { toast } from "@/lib/toast";
 
 type Sensors = ReturnType<typeof useSensors>;
 
@@ -263,10 +264,13 @@ export function PaperOverview({ paper: initial }: { paper: Paper }) {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // Optimistically apply the new paper, then persist to the DB in the background.
-  function persist(next: Paper) {
+  // Reorders stay quiet on success; deletes pass a message. Failures always toast.
+  function persist(next: Paper, successMsg?: string) {
     setPaper(next);
     startTransition(async () => {
-      await savePaper(next);
+      const res = await savePaper(next);
+      if ("error" in res) toast.error(res.error);
+      else if (successMsg) toast.success(successMsg);
     });
   }
 
@@ -304,13 +308,21 @@ export function PaperOverview({ paper: initial }: { paper: Paper }) {
 
   function deleteSection(section: Section) {
     if (!window.confirm(`Delete "${section.label}" and its units?`)) return;
-    persist({ ...paper, sections: paper.sections.filter((s) => s.id !== section.id) });
+    persist(
+      { ...paper, sections: paper.sections.filter((s) => s.id !== section.id) },
+      "Section deleted",
+    );
   }
 
   function handleDeletePaper() {
     if (!window.confirm(`Delete "${paper.title}"? This can’t be undone.`)) return;
     startTransition(async () => {
-      await deletePaper(paper.id);
+      const res = await deletePaper(paper.id);
+      if ("error" in res) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Paper deleted");
       router.push("/admin/syllabus");
       router.refresh();
     });

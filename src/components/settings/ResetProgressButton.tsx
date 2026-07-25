@@ -6,6 +6,7 @@ import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { clearUserStateCaches } from "@/lib/hooks/useUserProgress";
 import { resetProgress } from "@/app/(dashboard)/settings/actions";
+import { toast } from "@/lib/toast";
 
 /**
  * Wipes the user's progress after an explicit confirm. Clears the shared client
@@ -29,11 +30,13 @@ export function ResetProgressButton({ disabled }: { disabled?: boolean }) {
     const res = await resetProgress();
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       setBusy(false);
       return;
     }
     clearUserStateCaches();
     setBusy(false);
+    toast.success("Progress reset");
     router.refresh();
   }
 

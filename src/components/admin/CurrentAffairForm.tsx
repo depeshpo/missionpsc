@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { makeCurrentAffairId } from "@/data/currentAffairs";
+import { toast } from "@/lib/toast";
 import {
   createCurrentAffair,
   updateCurrentAffair,
@@ -136,8 +137,10 @@ export function CurrentAffairForm({
     setSaving(false);
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       return;
     }
+    toast.success(editing ? "Item saved" : "Item added");
     router.push("/admin/current-affairs");
     router.refresh();
   }

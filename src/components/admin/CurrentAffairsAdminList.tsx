@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate } from "@/data/currentAffairs";
 import { deleteCurrentAffair } from "@/app/(dashboard)/admin/current-affairs/actions";
+import { toast } from "@/lib/toast";
 
 /** Admin manage view for the current-affairs collection (from the DB): edit/delete rows. */
 export function CurrentAffairsAdminList({ items }: { items: CurrentAffairItem[] }) {
@@ -32,7 +33,12 @@ export function CurrentAffairsAdminList({ items }: { items: CurrentAffairItem[] 
 
   async function handleDelete(id: string, title: string) {
     if (!window.confirm(`Delete “${title}”? This removes it from the public feed.`)) return;
-    await deleteCurrentAffair(id);
+    const res = await deleteCurrentAffair(id);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Item deleted");
     router.refresh();
   }
 

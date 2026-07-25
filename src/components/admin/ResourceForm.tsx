@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { toast } from "@/lib/toast";
 import { resourceCategories, makeResourceId } from "@/data/resources";
 import {
   createResource,
@@ -91,8 +92,10 @@ export function ResourceForm({
     setSaving(false);
     if ("error" in res) {
       setError(res.error);
+      toast.error(res.error);
       return;
     }
+    toast.success(editing ? "Resource saved" : "Resource added");
     router.push("/admin/resources");
     router.refresh();
   }

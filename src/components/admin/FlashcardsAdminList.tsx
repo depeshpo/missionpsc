@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { deleteDeck } from "@/app/(dashboard)/admin/flashcards/actions";
+import { toast } from "@/lib/toast";
 
 /** Admin manage view for the flashcards collection (from the DB): edit/delete decks. */
 export function FlashcardsAdminList({ decks }: { decks: Deck[] }) {
@@ -30,7 +31,12 @@ export function FlashcardsAdminList({ decks }: { decks: Deck[] }) {
 
   async function handleDelete(id: string, title: string) {
     if (!window.confirm(`Delete “${title}” and all its cards? This removes it from the public page.`)) return;
-    await deleteDeck(id);
+    const res = await deleteDeck(id);
+    if ("error" in res) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Deck deleted");
     router.refresh();
   }
 
