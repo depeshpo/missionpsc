@@ -50,9 +50,15 @@ about making sure RLS is airtight and nothing bypasses it.
       Content-Security-Policy** minted per request in `src/proxy.ts` (`script-src` nonce +
       `strict-dynamic`, no `'unsafe-inline'` for scripts; Supabase + youtube-nocookie allow-listed). The
       theme-init inline script carries the nonce via the root layout. HSTS is added by Vercel over HTTPS.
-- [ ] **[account] Run `npm audit`.** 5 high-severity advisories were reported. Review and
-      `npm audit fix`; avoid `--force` unless you check the major bumps. Turn on **Dependabot** on the
-      public repo.
+- [x] **[code] `npm audit` triaged — DONE (2026-07-26).** Bumped **Next `16.2.7 → 16.2.12`**
+      (`53755ee`), which fixes the one runtime-exploitable advisory: Next unauthenticated disclosure of
+      internal Server Function endpoints (GHSA-955p-x3mx-jcvp). Remaining `audit` highs are **accepted**
+      — all require breaking changes and none reach production users: `sharp@0.34.5` + `postcss@8.4.31`
+      are bundled *inside* Next (npm can only "fix" them by downgrading Next to 9.x; sharp is
+      `next/image` optimization, which runs on **Vercel's infra**, not this bundle; that postcss is
+      build-time only), and `brace-expansion`/`minimatch` come via **ESLint** (dev-only, never shipped;
+      fix is the ESLint 10 breaking major). Revisit when a newer Next ships patched deps. **Still TODO
+      [account]:** turn on **Dependabot** on the public repo.
 - [ ] **[dashboard] Set the production Site URL + redirect allowlist** (Auth → URL Configuration) to the
       Vercel domain, so auth flows and any future email links resolve to prod, not localhost.
 - [ ] **[dashboard] Review auth rate limits** (Auth → Rate Limits). Consider a CAPTCHA
