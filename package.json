@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "seed": "tsx --env-file=.env.local scripts/seed.ts"
   },
   "dependencies": {
