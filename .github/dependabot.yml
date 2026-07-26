@@ -1,0 +1,20 @@
+# Dependabot version-update PRs. They run through CI (.github/workflows/ci.yml),
+# so anything that breaks typecheck/lint/build is caught before merge.
+version: 2
+updates:
+  # npm dependencies (Next, React, Supabase, tooling, …).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # One grouped PR per week instead of one per package.
+      all-deps:
+        patterns: ["*"]
+
+  # The GitHub Actions used in the CI workflow (checkout, setup-node).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
