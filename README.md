@@ -83,3 +83,8 @@ update profiles set role = 'admin' where id = '<the-user-uuid>';
 - **Content lives in the database, not in the code.** `src/data/*.ts` is only the one-time seed for
   `npm run seed`; the app reads through `src/lib/db/*`. Author real material through `/admin`.
 - Next 16 renamed `middleware` → **`proxy`**; auth gating lives in `src/proxy.ts`.
+
+## License
+
+All rights reserved — see [`LICENSE`](LICENSE). The source is public for viewing and reference, not
+licensed for reuse. The study material is the author's own work.

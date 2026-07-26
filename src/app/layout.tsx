@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
-import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import { TopProgress } from "@/components/layout/TopProgress";
 import { WelcomeToast } from "@/components/auth/WelcomeToast";
 
 // Applies the saved/preferred theme before paint to avoid a flash of the wrong
-// theme. Injected via next/script (beforeInteractive) so it is hydration-safe.
+// theme. Rendered as a raw inline <script> carrying the per-request CSP nonce (see
+// proxy.ts). suppressHydrationWarning is needed because React strips the nonce from
+// the client-side representation, which would otherwise flag an attribute mismatch.
 const themeInit = `(function(){try{var k='mission-psc:theme';var s=localStorage.getItem(k);var d=s==='dark'||(s===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 const geistSans = Geist({
@@ -27,11 +29,16 @@ export const metadata: Metadata = {
     "Study portal for the Nepal Lok Sewa Section Officer (Foreign Service) examination.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Set by the proxy per request. Reading it here also forces dynamic rendering,
+  // which nonce-based CSP requires. Applied to our one inline script below; Next
+  // applies the same nonce to its own scripts automatically.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="en"
@@ -39,9 +46,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {themeInit}
-        </Script>
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeInit }}
+        />
         <TopProgress />
         {/* Surface chrome (Learn header vs Dashboard sidebar) lives in each
             route group's own layout: src/app/(learn) and src/app/(dashboard). */}

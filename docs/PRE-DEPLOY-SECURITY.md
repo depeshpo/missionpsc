@@ -36,15 +36,20 @@ about making sure RLS is airtight and nothing bypasses it.
 - [ ] **[dashboard] Raise the minimum password length.** Config shows `minimum_password_length = 6`.
       Set 8–12 in Auth settings. Consider enabling leaked-password protection (Supabase "Password
       strength / HaveIBeenPwned" option).
-- [ ] **[code] Sanitize note HTML.** `src/components/notes/NoteContent.tsx` renders authored HTML with
-      `dangerouslySetInnerHTML`. It's admin-authored today (low risk with one trusted admin), but it's
-      **stored XSS** the moment a second admin is added or authoring opens up. Sanitize on render (e.g.
-      DOMPurify) or on save.
-- [ ] **[code] Add HTTP security headers** in `next.config.ts` (currently none): at least
-      `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
-      `X-Frame-Options: DENY` (or `frame-ancestors 'none'`), and a **Content-Security-Policy**. Note the
-      theme-init inline `<script>` in `src/app/layout.tsx` needs a CSP hash/nonce, so CSP takes a little
-      care. HSTS is provided by Vercel automatically over HTTPS.
+- [x] **[code] Sanitize note HTML — ACCEPTED RISK, deferred (decided 2026-07-26).**
+      `src/components/notes/NoteContent.tsx` renders authored HTML with `dangerouslySetInnerHTML`. Today
+      it's authored only by the **single trusted admin** (you), so there is no untrusted input path — the
+      practical XSS risk is nil. Deferred deliberately to avoid adding a dependency (DOMPurify) against
+      the project's "no new deps" convention. **Revisit trigger:** the moment a second admin is added or
+      authoring is opened to non-admins, this becomes **stored XSS** — sanitize on save or on render
+      (DOMPurify) *before* that happens. The full CSP added at deploy (`script-src` nonce + no
+      `'unsafe-inline'`) is a meaningful backstop but is **not** a substitute for sanitization.
+- [x] **[code] HTTP security headers — DONE (2026-07-26).** Static headers
+      (`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+      `X-Frame-Options: DENY`, `Permissions-Policy`) in `next.config.ts`, plus a **full nonce-based
+      Content-Security-Policy** minted per request in `src/proxy.ts` (`script-src` nonce +
+      `strict-dynamic`, no `'unsafe-inline'` for scripts; Supabase + youtube-nocookie allow-listed). The
+      theme-init inline script carries the nonce via the root layout. HSTS is added by Vercel over HTTPS.
 - [ ] **[account] Run `npm audit`.** 5 high-severity advisories were reported. Review and
       `npm audit fix`; avoid `--force` unless you check the major bumps. Turn on **Dependabot** on the
       public repo.
@@ -55,14 +60,15 @@ about making sure RLS is airtight and nothing bypasses it.
 
 ## 🟢 Good practice / hardening
 
-- [ ] **[code] Track `.env.example`.** The `.env*` gitignore rule currently swallows it, so a fresh
-      public clone has no env template. Add `!.env.example` to `.gitignore` (keeps real `.env.local`
-      ignored). Confirm `.env.example` holds only placeholders — it does.
-- [ ] **[code] Remove dead code** `src/lib/supabase/admin.ts` (`createAdminClient`, service-role) —
-      nothing imports it. Deleting it removes the only in-`src` reference to the service-role key and
-      shrinks the attack surface. (`scripts/seed.ts` builds its own client, so seeding still works.)
-- [ ] **[account] Add a `LICENSE`** before making the repo public (decide how others may use it), and a
-      note that the study content is your own work.
+- [x] **[code] Track `.env.example` — DONE (2026-07-26).** Added `!.env.example` to `.gitignore` after
+      the `.env*` rule; real `.env.local` stays ignored, the placeholder template ships with clones.
+- [x] **[code] Remove dead code — DONE (2026-07-26).** Deleted `src/lib/supabase/admin.ts`
+      (`createAdminClient`, service-role) — nothing imported it. Removes the only in-`src` reference to
+      the service-role key. (`scripts/seed.ts` builds its own client, so seeding still works.) Also
+      deleted the stale `pnpm-lock.yaml` (project is npm; two lockfiles confuse Vercel's auto-detect).
+- [x] **[code] Add a `LICENSE` — DONE (2026-07-26).** Proprietary "All rights reserved" `LICENSE`
+      (source public for viewing, not licensed for reuse; study content is the author's own work), with a
+      pointer from the README.
 - [ ] **[dashboard] Enable Point-in-Time Recovery / confirm backups** for the Supabase project if the
       data matters (free tier retains daily backups; the project also **auto-pauses after ~7 days
       idle** — see `./start.sh` and the README).
