@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import Script from "next/script";
 import "./globals.css";
-import { Toaster } from "@/lib/toast";
+import { Toaster } from "@/components/ui/Toaster";
 import { TopProgress } from "@/components/layout/TopProgress";
 import { WelcomeToast } from "@/components/auth/WelcomeToast";
 
