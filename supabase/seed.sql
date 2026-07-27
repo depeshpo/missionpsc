@@ -1,0 +1,12 @@
+-- Intentionally empty.
+--
+-- `supabase start` / `supabase db reset` apply the migrations (schema, RLS,
+-- is_admin(), the note-files bucket, the on_auth_user_created trigger) and then
+-- run this file. Content is NOT seeded here — after the stack is up, load a
+-- snapshot of prod content with:
+--
+--   npm run snapshot:local     # content tables (prod → local)
+--   npm run snapshot:files      # note-file blobs (optional)
+--   ADMIN_PASSWORD='…' npm run admin:local   # create the local admin
+--
+-- (referenced by [db.seed] sql_paths in supabase/config.toml).

@@ -86,33 +86,62 @@ step "Supabase"
 if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON" ]; then
   warn "skipped — Supabase URL/anon key not available"
 else
+  # Is this the local dev stack or the cloud project? Governs the messaging.
+  IS_LOCAL=false
+  case "$SUPABASE_URL" in
+    http://127.0.0.1*|http://localhost*|https://127.0.0.1*|https://localhost*) IS_LOCAL=true ;;
+  esac
+
   # Query a real public-readable table. NOTE: /rest/v1/ (the root) is not a valid
   # health check — the gateway answers 401 even while the database is down.
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
     -H "apikey: ${SUPABASE_ANON}" -H "Authorization: Bearer ${SUPABASE_ANON}" \
     "${SUPABASE_URL}/rest/v1/papers?select=id&limit=1" 2>/dev/null)
 
-  case "$STATUS" in
-    200)
-      ok "project awake and responding"
-      ;;
-    000)
-      bad "cannot reach ${SUPABASE_URL}"
-      printf "      %sCheck your internet connection, or the project URL in .env.local.%s\n" "$DIM" "$OFF"
-      ;;
-    502|503|504|521|522|544)
-      bad "project looks PAUSED (HTTP $STATUS)"
-      printf "      %sFree-tier Supabase projects pause after ~7 days idle. Your data is safe.%s\n" "$DIM" "$OFF"
-      printf "      %sFix: open https://supabase.com/dashboard → this project → Restore, wait a%s\n" "$DIM" "$OFF"
-      printf "      %sfew minutes, then re-run ./start.sh. Every page will error until it's up.%s\n" "$DIM" "$OFF"
-      ;;
-    401|403)
-      bad "auth rejected (HTTP $STATUS) — the anon key in .env.local may be wrong or rotated"
-      ;;
-    *)
-      warn "unexpected response (HTTP $STATUS) — the app may not work correctly"
-      ;;
-  esac
+  if [ "$IS_LOCAL" = true ]; then
+    # Local Supabase (Docker). No free-tier pausing — "down" just means the stack
+    # isn't running.
+    case "$STATUS" in
+      200)
+        ok "local Supabase stack up (${SUPABASE_URL})"
+        ;;
+      000)
+        bad "local Supabase stack not reachable at ${SUPABASE_URL}"
+        printf "      %sStart Docker Desktop, then bring the stack up:%s\n" "$DIM" "$OFF"
+        printf "      %s  npx supabase start%s\n" "$DIM" "$OFF"
+        printf "      %sSnapshot prod content into it with:  npm run snapshot:local%s\n" "$DIM" "$OFF"
+        ;;
+      401|403)
+        bad "auth rejected (HTTP $STATUS) — local anon key mismatch"
+        printf "      %sRe-copy the keys from 'npx supabase status' into .env.local.%s\n" "$DIM" "$OFF"
+        ;;
+      *)
+        warn "unexpected response (HTTP $STATUS) from the local stack"
+        ;;
+    esac
+  else
+    case "$STATUS" in
+      200)
+        ok "project awake and responding"
+        ;;
+      000)
+        bad "cannot reach ${SUPABASE_URL}"
+        printf "      %sCheck your internet connection, or the project URL in .env.local.%s\n" "$DIM" "$OFF"
+        ;;
+      502|503|504|521|522|544)
+        bad "project looks PAUSED (HTTP $STATUS)"
+        printf "      %sFree-tier Supabase projects pause after ~7 days idle. Your data is safe.%s\n" "$DIM" "$OFF"
+        printf "      %sFix: open https://supabase.com/dashboard → this project → Restore, wait a%s\n" "$DIM" "$OFF"
+        printf "      %sfew minutes, then re-run ./start.sh. Every page will error until it's up.%s\n" "$DIM" "$OFF"
+        ;;
+      401|403)
+        bad "auth rejected (HTTP $STATUS) — the anon key in .env.local may be wrong or rotated"
+        ;;
+      *)
+        warn "unexpected response (HTTP $STATUS) — the app may not work correctly"
+        ;;
+    esac
+  fi
 fi
 
 # --- 5. go -------------------------------------------------------------------

@@ -24,40 +24,51 @@ To run the checks without starting the server:
 ./start.sh --check
 ```
 
-## First-time setup
+## Local development
 
-1. **Node.js 20+** (developed on 24).
-2. **Environment** — copy the template and fill in your Supabase project values
-   (Supabase dashboard → Project Settings → API):
+Local dev runs against a **local Supabase stack (Docker)** — never production. The production site
+uses its own cloud project (env vars in Vercel); nothing you do locally touches prod data.
+
+**Prerequisites:** Node.js 22 (see [`.nvmrc`](.nvmrc)) and **Docker Desktop**.
+
+1. **Start the local stack** (Docker must be running):
+
+   ```bash
+   npx supabase start
+   ```
+
+   This applies the migrations in `supabase/migrations/` (schema, RLS, the `note-files` bucket, the
+   admin-role trigger) and prints the local **API URL**, **anon key**, and **service_role key**.
+
+2. **Environment** — copy the template and paste those three values in:
 
    ```bash
    cp .env.example .env.local
    ```
 
-   | Variable | Purpose |
-   | --- | --- |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (public) |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key (public; RLS enforces access) |
-   | `SUPABASE_SERVICE_ROLE_KEY` | **Server only.** Used by the seed script. Never commit or expose it. |
+   `.env.local` is gitignored. For the local stack the keys are fixed local demo keys, not real secrets.
+   (Production keys live only in Vercel — and, if you ever need to run a script against prod, in a
+   separate gitignored `.env.prod.local`; see the snapshot scripts below.)
 
-   `.env.local` is gitignored. The running app needs only the two `NEXT_PUBLIC_*` values — nothing in
-   `src/` reads the service-role key.
-
-3. **Database** — apply the migrations in `supabase/migrations/` to your project, then load the
-   starter content:
+3. **Load content + create your admin:**
 
    ```bash
-   npx supabase db push
-   npm run seed
+   npm run snapshot:local     # copy prod content tables into local (reads prod's public anon key)
+   npm run snapshot:files      # optional: copy note-file blobs so attachments resolve locally
+   ADMIN_PASSWORD='choose-a-dev-password' npm run admin:local   # create local admin@mofa.com
    ```
+
+   `snapshot:local` copies only content; per-user data starts empty in dev. To reset the local DB to a
+   clean schema, `npx supabase db reset`, then re-run the snapshot + admin steps.
 
 ## Signing in
 
 **The app is login-gated.** Only `/` (landing) and `/login` are public; everything else redirects to
 the login page. **Public signup is disabled by design** — accounts are created by the admin.
 
-To create a user: Supabase dashboard → Authentication → Users → *Add user*. A `profiles` row is
-created automatically with `role = 'user'`. To make someone an admin (required for `/admin`):
+Locally, `npm run admin:local` (above) creates `admin@mofa.com` and sets its role to `admin`. To add
+more local users: Supabase Studio (`http://127.0.0.1:54323`) → Authentication → Users → *Add user*
+(a `profiles` row is created with `role = 'user'`); promote with:
 
 ```sql
 update profiles set role = 'admin' where id = '<the-user-uuid>';
@@ -72,14 +83,19 @@ update profiles set role = 'admin' where id = '<the-user-uuid>';
 | `npm run dev` | Dev server, no checks |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm run seed` | Push `src/data/*.ts` starter content into Supabase (idempotent) |
+| `npm run typecheck` | `next typegen` + `tsc --noEmit` |
+| `npm run seed` | Push `src/data/*.ts` starter content into the DB in `.env.local` (idempotent) |
+| `npm run snapshot:local` | Copy prod **content** into the local stack (dev only) |
+| `npm run snapshot:files` | Copy prod **note-file blobs** into the local stack (dev only) |
+| `npm run admin:local` | Create/promote `admin@mofa.com` in the local stack (`ADMIN_PASSWORD=…`) |
 
 ## Gotchas
 
-- **A paused Supabase project is the most common "nothing works".** Free-tier projects pause after
-  about a week of inactivity, and since every page reads from the database, the whole app fails.
-  `./start.sh` detects this and tells you to hit **Restore** in the Supabase dashboard. Pausing does
-  not delete data.
+- **Local dev "nothing works" is usually the stack being down** — Docker not running, or you haven't
+  run `npx supabase start`. `./start.sh` detects a local URL and tells you which. (The **cloud**
+  project is a different failure mode: free-tier projects **pause** after ~7 days idle — that only
+  affects production/the cloud project, and `./start.sh` names it with a **Restore** hint when
+  `.env.local` points at a `*.supabase.co` URL. Pausing does not delete data.)
 - **Content lives in the database, not in the code.** `src/data/*.ts` is only the one-time seed for
   `npm run seed`; the app reads through `src/lib/db/*`. Author real material through `/admin`.
 - Next 16 renamed `middleware` → **`proxy`**; auth gating lives in `src/proxy.ts`.
