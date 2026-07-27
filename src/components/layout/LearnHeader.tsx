@@ -50,7 +50,10 @@ export function LearnHeader() {
 
         <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
           <ThemeToggle />
-          <AuthNav />
+          {/* Login/Logout: in the header on desktop, moved into the menu on mobile. */}
+          <div className="hidden md:block">
+            <AuthNav />
+          </div>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -82,6 +85,9 @@ export function LearnHeader() {
                 {item.label}
               </Link>
             ))}
+            <div className="mt-2 border-t border-border pt-3">
+              <AuthNav />
+            </div>
           </div>
         </nav>
       ) : null}
