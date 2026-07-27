@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, BookOpen, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -50,6 +50,13 @@ export function Topbar() {
           </div>
         </div>
       )}
+      <Link
+        href="/"
+        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <BookOpen className="h-4 w-4 shrink-0" />
+        <span className="hidden sm:inline">Visit portal</span>
+      </Link>
       <ThemeToggle />
       <UserMenu />
     </header>
