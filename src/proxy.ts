@@ -53,6 +53,13 @@ function buildCsp(nonce: string): string {
     .filter(Boolean)
     .join(" ");
 
+  // PDF attachments preview in an <iframe> served from Supabase Storage (signed
+  // URLs for answer files, public URLs for note files), so the bucket origin must
+  // be allowed to frame — alongside the YouTube embeds.
+  const frameSrc = ["'self'", supabaseOrigin, "https://www.youtube-nocookie.com"]
+    .filter(Boolean)
+    .join(" ");
+
   const directives = [
     `default-src 'self'`,
     `script-src ${scriptSrc}`,
@@ -60,7 +67,7 @@ function buildCsp(nonce: string): string {
     `img-src 'self' blob: data: https:`,
     `font-src 'self'`,
     `connect-src ${connectSrc}`,
-    `frame-src https://www.youtube-nocookie.com`,
+    `frame-src ${frameSrc}`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,

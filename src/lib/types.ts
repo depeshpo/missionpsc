@@ -112,6 +112,13 @@ export interface NoteFile {
 }
 
 /**
+ * A file attached to a practice-answer draft. Same shape as {@link NoteFile}, but
+ * stored in the PRIVATE `answer-files` bucket (the student's own work) and read
+ * via signed URLs rather than a public URL.
+ */
+export type AnswerFile = NoteFile;
+
+/**
  * A "subtitle" section of a note: a heading + compulsory rich-text body (HTML),
  * plus optional, any-count, drag-rerankable videos, files, and links.
  */

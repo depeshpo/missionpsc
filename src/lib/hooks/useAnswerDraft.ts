@@ -1,35 +1,49 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AnswerFile } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * The "your answer" free text for one question, backed by the `answer_drafts`
- * Supabase table (B2). Replaces `useLocalProgress<string>(answerKey(id), "")`.
+ * One question's practice-answer draft, backed by the `answer_drafts` Supabase
+ * table (B2). `body` holds the rich-text HTML; `attachments` is the jsonb list of
+ * uploaded files (blobs live in the private `answer-files` bucket, see
+ * `@/lib/answerFiles`).
  *
- * localStorage writes were synchronous per-keystroke; a network write must not
- * be, so writes are debounced (~600ms). Returns `[text, setText]` plus `ready`
- * (derived, so no setState in the effect body) so callers can avoid clobbering
- * the loaded value before it arrives.
+ * Body edits are debounced (~600ms) — a network write per keystroke would be
+ * wasteful. Attachment changes persist promptly (the blob is already uploaded, so
+ * we just want the metadata saved). `ready` (derived, so no setState in an effect)
+ * lets callers avoid clobbering the loaded value before it arrives.
  */
 const DEBOUNCE_MS = 600;
 
 export function useAnswerDraft(questionId: string) {
-  const [text, setText] = useState("");
+  const [html, setHtmlState] = useState("");
+  const [attachments, setAttachmentsState] = useState<AnswerFile[]>([]);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Newest values, read at flush time so a debounced body save and a prompt
+  // attachment save never write each other's stale copy.
+  const latest = useRef<{ html: string; attachments: AnswerFile[] }>({
+    html: "",
+    attachments: [],
+  });
 
   // Load the stored draft on mount / question change (async setState is fine).
   useEffect(() => {
     let active = true;
     createClient()
       .from("answer_drafts")
-      .select("body")
+      .select("body, attachments")
       .eq("question_id", questionId)
       .maybeSingle()
       .then(({ data }) => {
         if (!active) return;
-        setText(data?.body ?? "");
+        const body = data?.body ?? "";
+        const files = (data?.attachments as AnswerFile[] | null) ?? [];
+        setHtmlState(body);
+        setAttachmentsState(files);
+        latest.current = { html: body, attachments: files };
         setLoadedFor(questionId);
       });
     return () => {
@@ -38,38 +52,53 @@ export function useAnswerDraft(questionId: string) {
     };
   }, [questionId]);
 
-  const save = useCallback(
+  const persist = useCallback(async () => {
+    const supabase = createClient();
+    // Upsert's conflict target includes user_id, so PostgREST needs it in the
+    // payload — the DB default only fills it on a plain insert.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("answer_drafts").upsert(
+      {
+        user_id: user.id,
+        question_id: questionId,
+        body: latest.current.html,
+        attachments: latest.current.attachments,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,question_id" },
+    );
+  }, [questionId]);
+
+  const setHtml = useCallback(
     (value: string) => {
+      setHtmlState(value);
+      latest.current = { ...latest.current, html: value };
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(async () => {
-        const supabase = createClient();
-        // Upsert's conflict target includes user_id, so PostgREST needs it in the
-        // payload — the DB default only fills it on a plain insert.
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-        await supabase.from("answer_drafts").upsert(
-          {
-            user_id: user.id,
-            question_id: questionId,
-            body: value,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,question_id" },
-        );
-      }, DEBOUNCE_MS);
+      timer.current = setTimeout(() => void persist(), DEBOUNCE_MS);
     },
-    [questionId],
+    [persist],
   );
 
-  const update = useCallback(
-    (value: string) => {
-      setText(value);
-      save(value);
+  const setAttachments = useCallback(
+    (value: AnswerFile[]) => {
+      setAttachmentsState(value);
+      latest.current = { ...latest.current, attachments: value };
+      // The blob is already uploaded; save the metadata now rather than debounced,
+      // so navigating away immediately doesn't drop the attachment.
+      if (timer.current) clearTimeout(timer.current);
+      void persist();
     },
-    [save],
+    [persist],
   );
 
-  return { text, setText: update, ready: loadedFor === questionId };
+  return {
+    html,
+    setHtml,
+    attachments,
+    setAttachments,
+    ready: loadedFor === questionId,
+  };
 }
