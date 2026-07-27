@@ -23,20 +23,23 @@
   --ring: #6366f1; /* indigo-500 */
 }
 
-/* ---- Design tokens (dark) ---- */
+/* ---- Design tokens (dark) ----
+   Supabase-style: neutral near-black surfaces (not blue-tinted), thin subtle
+   borders, off-white text. Brand stays violet for buttons/focus/active states;
+   success borrows Supabase's signature green. */
 .dark {
-  --background: #0b1120;
-  --foreground: #e2e8f0;
-  --card: #111827;
-  --card-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --border: #1e293b;
-  --primary: #6366f1;
+  --background: #171717; /* app canvas */
+  --foreground: #ededed;
+  --card: #1e1e1e; /* panels lift subtly off the canvas */
+  --card-foreground: #ededed;
+  --muted: #262626; /* hover / muted surfaces */
+  --muted-foreground: #a3a3a3;
+  --border: #2e2e2e; /* thin, low-contrast edges */
+  --primary: #6366f1; /* violet brand */
   --primary-foreground: #ffffff;
-  --accent: #1e1b4b;
+  --accent: #2a2540; /* subtle violet-tinted active-nav surface */
   --accent-foreground: #c7d2fe;
-  --success: #22c55e;
+  --success: #3ecf8e; /* Supabase green */
   --warning: #f59e0b;
   --destructive: #ef4444; /* red-500 */
   --destructive-foreground: #ffffff;

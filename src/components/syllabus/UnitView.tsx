@@ -15,7 +15,15 @@ import { UnitCheckbox } from "./UnitCheckbox";
  * paper shows an empty state. Stays a client component for the completion
  * checkbox (localStorage progress).
  */
-export function UnitView({ paper, unitId }: { paper: Paper; unitId: string }) {
+export function UnitView({
+  paper,
+  unitId,
+  hasNote,
+}: {
+  paper: Paper;
+  unitId: string;
+  hasNote: boolean;
+}) {
   const section = paper.sections.find((s) => s.units.some((u) => u.id === unitId));
   const unit = section?.units.find((u) => u.id === unitId);
 
@@ -47,9 +55,16 @@ export function UnitView({ paper, unitId }: { paper: Paper; unitId: string }) {
   }
 
   const studyLinks = [
-    { href: `/notes/${paper.id}/${unit.id}`, label: "Read notes", icon: BookOpen },
-    { href: `/answers/${paper.id}`, label: "Practice answers", icon: PenLine },
-    { href: "/flashcards", label: "Flashcards", icon: Layers },
+    {
+      href: `/notes/${paper.id}/${unit.id}`,
+      label: "Read notes",
+      icon: BookOpen,
+      // Only linkable when a note was authored for this unit; otherwise it 404s.
+      available: hasNote,
+      unavailableLabel: "No notes yet",
+    },
+    { href: `/answers/${paper.id}`, label: "Practice answers", icon: PenLine, available: true },
+    { href: "/flashcards", label: "Flashcards", icon: Layers, available: true },
   ];
 
   return (
@@ -87,6 +102,24 @@ export function UnitView({ paper, unitId }: { paper: Paper; unitId: string }) {
           <div className="grid gap-3 sm:grid-cols-3">
             {studyLinks.map((s) => {
               const Icon = s.icon;
+
+              // Unavailable (e.g. no note for this unit yet): a muted, non-clickable
+              // card instead of a link that would 404.
+              if (!s.available) {
+                return (
+                  <Card key={s.label} className="opacity-60">
+                    <CardContent className="flex items-center gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex-1 text-sm font-medium text-muted-foreground">
+                        {s.unavailableLabel ?? s.label}
+                      </span>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
               return (
                 <Link key={s.label} href={s.href}>
                   <Card className="transition-colors hover:border-primary/40">
@@ -102,9 +135,6 @@ export function UnitView({ paper, unitId }: { paper: Paper; unitId: string }) {
               );
             })}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Notes, answer practice and flashcards arrive as those features are built.
-          </p>
         </div>
       </div>
     </PageShell>
