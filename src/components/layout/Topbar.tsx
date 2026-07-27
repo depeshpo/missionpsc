@@ -7,9 +7,10 @@ import { cn } from "@/lib/cn";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { useAdminChrome } from "@/lib/hooks/useAdminChrome";
 import { ThemeToggle } from "./ThemeToggle";
+import { MobileNav } from "./MobileNav";
 import { UserMenu } from "@/components/auth/UserMenu";
 
-export function Topbar() {
+export function Topbar({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   // On admin add/edit pages, the page floats its breadcrumb up here while scrolled.
   const chrome = useAdminChrome();
@@ -17,7 +18,8 @@ export function Topbar() {
   const compact = pathname.startsWith("/admin/");
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-6 backdrop-blur">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
+      <MobileNav isAdmin={isAdmin} />
       {chrome ? (
         // Floated breadcrumb: collapse the search to an icon and show the trail.
         <div className="flex min-w-0 flex-1 items-center gap-2">

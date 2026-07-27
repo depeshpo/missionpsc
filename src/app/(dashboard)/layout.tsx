@@ -31,7 +31,7 @@ export default async function DashboardLayout({
     <div className="flex h-screen overflow-hidden">
       <Sidebar className="hidden md:flex" isAdmin={isAdmin} defaultCollapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar isAdmin={isAdmin} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
